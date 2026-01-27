@@ -32,18 +32,23 @@ class BaseAgent(ABC):
             rate_limiter=rate_limiter,
         )
 
-        # LangGraph-based agent
-        self.agent = create_agent(
-            model=self.llm,
-            system_prompt=SystemMessage(content=system_prompt),
-            tools=tools,
-        )
-
         # Optional structured output parser
         self._output_parser: Optional[PydanticOutputParser] = (
             PydanticOutputParser(pydantic_object=output_structure)
             if output_structure
             else None
+        )
+
+        # If we have a structured output parser, add its format instructions
+        # to the system prompt so the model knows how to respond.
+        if self._output_parser:
+            system_prompt += f"\n\n{self._output_parser.get_format_instructions()}"
+
+        # LangGraph-based agent
+        self.agent = create_agent(
+            model=self.llm,
+            system_prompt=SystemMessage(content=system_prompt),
+            tools=tools,
         )
 
     def invoke(self, user_input: str):
