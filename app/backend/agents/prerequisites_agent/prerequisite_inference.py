@@ -10,7 +10,6 @@ load_dotenv()
 opik.configure()
 
 
-
 def get_prerequisites_agent(state: PrereqInputState):
     #Check environment variables to get gemini API key
     api_key = os.getenv("GOOGLE_API_KEY")
@@ -31,7 +30,6 @@ def get_prerequisites_agent(state: PrereqInputState):
     except Exception as e:
         print(f"Failed to use prerequisite agent: {str(e)}")
         return {"prerequisites": []}
-
 
 
 # Define the Graph
