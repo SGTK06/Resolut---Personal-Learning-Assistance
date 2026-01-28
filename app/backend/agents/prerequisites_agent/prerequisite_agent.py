@@ -1,4 +1,3 @@
-import os
 from .prerequisites_model import Prerequisites
 from ..base_agent import BaseAgent
 
