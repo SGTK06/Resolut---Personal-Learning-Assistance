@@ -7,8 +7,7 @@ import {
     FileText
 } from 'lucide-react';
 import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL } from '../api';
 
 const LearnTopicFlow = ({ onCancel }) => {
     const [step, setStep] = useState(1);
@@ -50,19 +49,56 @@ const LearnTopicFlow = ({ onCancel }) => {
         setLoading(true);
         setError(null);
         try {
-            const formData = new FormData();
-            formData.append('topic', topic);
-            files.forEach(file => {
-                formData.append('files', file);
+            // 1. Upload Materials (if any)
+            if (files.length > 0) {
+                const formData = new FormData();
+                formData.append('topic', topic);
+                files.forEach(file => {
+                    formData.append('files', file);
+                });
+
+                await axios.post(`${API_BASE_URL}/api/upload-materials`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
+
+            // 2. Prepare Prerequisite Lists
+            const known = [];
+            const unknown = [];
+            prerequisites.forEach((item, idx) => {
+                if (knownPrerequisites[idx] === true) {
+                    known.push(item);
+                } else {
+                    unknown.push(item);
+                }
             });
 
-            await axios.post(`${API_BASE_URL}/api/upload-materials`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+            // 3. Generate Roadmap
+            // Note: We use the local proxy /api/planning which forwards to AI service
+            const planningResponse = await axios.post(`${API_BASE_URL}/api/planning`, {
+                topic,
+                focus_area: focusArea,
+                prerequisites_known: known,
+                prerequisites_unknown: unknown
+            });
+
+            const roadmap = planningResponse.data.roadmap;
+
+            // Validate that we actually got a roadmap
+            if (!roadmap || Object.keys(roadmap).length === 0) {
+                throw new Error('Roadmap generation returned empty result. Please try again.');
+            }
+
+            // 4. Save Roadmap Locally
+            await axios.post(`${API_BASE_URL}/api/roadmaps`, {
+                topic,
+                roadmap: roadmap
             });
 
             setStep(5); // Success step
         } catch (err) {
-            setError('Failed to upload materials.');
+            const msg = err.response?.data?.detail || err.message || 'Failed to generate roadmap';
+            setError('Error: ' + msg);
             console.error(err);
         } finally {
             setLoading(false);
@@ -184,7 +220,7 @@ const LearnTopicFlow = ({ onCancel }) => {
             {step === 4 && (
                 <div className="space-y-6">
                     <h2 className="text-2xl font-bold dark:text-white">Got any course materials?</h2>
-                    <p className="text-slate-500 dark:text-slate-400">Upload PDF documents to help AI personalize your learning experience.</p>
+                    <p className="text-slate-500 dark:text-slate-400">Upload PDF documents to help AI personalize your roadmap. The AI will scan them to tailor the plan.</p>
 
                     <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl p-8 flex flex-col items-center justify-center space-y-4 hover:border-cyan-400 hover:bg-cyan-50/50 dark:hover:bg-cyan-900/10 transition-all cursor-pointer relative group">
                         <input
@@ -217,17 +253,18 @@ const LearnTopicFlow = ({ onCancel }) => {
 
                     <div className="flex gap-4">
                         <button
-                            onClick={() => setStep(5)}
+                            onClick={handleSubmitAll}
+                            disabled={loading}
                             className="flex-1 py-4 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all"
                         >
-                            Skip
+                            Skip Upload
                         </button>
                         <button
                             onClick={handleSubmitAll}
-                            disabled={loading || files.length === 0}
+                            disabled={loading}
                             className="flex-1 bg-cyan-600 text-white py-4 rounded-xl font-bold hover:bg-cyan-700 flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-cyan-500/30"
                         >
-                            {loading ? <Loader2 className="animate-spin" /> : "Finish Setup"}
+                            {loading ? <Loader2 className="animate-spin" /> : (files.length > 0 ? "Upload & Generate" : "Generate Roadmap")}
                         </button>
                     </div>
                 </div>
@@ -240,14 +277,14 @@ const LearnTopicFlow = ({ onCancel }) => {
                         <CheckCircle2 size={48} />
                     </div>
                     <div className="space-y-2">
-                        <h2 className="text-3xl font-bold dark:text-white">All Set!</h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-lg">Your learning path for <span className="text-cyan-600 font-bold">"{topic}"</span> has been initialized.</p>
+                        <h2 className="text-3xl font-bold dark:text-white">Roadmap Ready!</h2>
+                        <p className="text-slate-500 dark:text-slate-400 text-lg">Your learning path for <span className="text-cyan-600 font-bold">"{topic}"</span> has been created.</p>
                     </div>
                     <button
-                        onClick={onCancel}
+                        onClick={onCancel} // This essentially goes back to Dashboard in parent context
                         className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 text-white py-4 rounded-xl font-bold hover:opacity-90 max-w-sm mx-auto block transition-all shadow-xl"
                     >
-                        Go to Topic Dashboard
+                        View Dashboard
                     </button>
                 </div>
             )}

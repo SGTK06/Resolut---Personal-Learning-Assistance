@@ -5,7 +5,7 @@ from ..base_agent import BaseAgent
 class PlanningAgent(BaseAgent):
     def __init__(self, google_api_key):
         super().__init__(
-            gemini_model="gemini-2.5-pro",
+            gemini_model="gemini-2.5-flash",
             gemini_api_key=google_api_key,
             system_prompt="""You are an expert educational consultant.
                 Based on the user's topic and specific focus area, Create a learning

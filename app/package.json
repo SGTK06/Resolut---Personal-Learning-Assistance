@@ -5,9 +5,10 @@
     "scripts": {
         "frontend:dev": "npm run dev --prefix frontend",
         "frontend:build": "npm run build --prefix frontend",
-        "backend:run": "cd backend && python main.py",
-        "desktop:dev": "python desktop/run_app.py",
-        "start": "concurrently \"npm run frontend:dev\" \"npm run desktop:dev\""
+        "backend": "cd backend/local_service && python -m uvicorn main:app --host 127.0.0.1 --port 8000",
+        "backend:run": "cd backend/local_service && python -m uvicorn main:app --host 127.0.0.1 --port 8000",
+        "desktop": "python desktop/run_app.py",
+        "start": "python desktop/run_app.py"
     },
     "devDependencies": {
         "concurrently": "^9.1.0"

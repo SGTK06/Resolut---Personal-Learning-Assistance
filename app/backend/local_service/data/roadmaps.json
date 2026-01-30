@@ -1,0 +1,58 @@
+{
+  "Deep Learning": {
+    "Machine Learning Basics": {
+      "Supervised Learning: Input-Output Mapping": "Understand the fundamental concept of supervised learning, where models learn from labeled data to map inputs to desired outputs.",
+      "Loss Functions: Quantifying Model Error": "Explore various loss functions (e.g., Mean Squared Error, Cross-Entropy) used to measure the discrepancy between predicted and actual outputs.",
+      "Optimization Algorithms: Finding the Best Model": "Learn about algorithms like Gradient Descent and its variants (e.g., Adam) that adjust model parameters to minimize the loss function.",
+      "Bias-Variance Trade-off and Overfitting": "Grasp the concepts of bias, variance, and how overfitting occurs when a model learns the training data too well, failing to generalize to new data."
+    },
+    "Fundamentals of Sequence Modeling": {
+      "What are Sequences? Understanding Sequential Data": "Define sequential data (e.g., text, time series) and its unique characteristics, where the order of elements matters.",
+      "Challenges in Processing Sequences: Long-term Dependencies": "Identify the difficulties in capturing relationships between distant elements in a sequence, known as long-term dependencies.",
+      "Introduction to Neural Networks for Sequences": "Briefly review how standard feed-forward neural networks struggle with sequential data due to their fixed input size.",
+      "Simple Neural Network Approaches and Their Flaws": "Discuss basic attempts to use NNs for sequences (e.g., sliding windows) and why they are insufficient for complex patterns."
+    },
+    "Recurrent Neural Networks (RNNs)": {
+      "The Basic RNN Cell: Processing Sequences Iteratively": "Understand the architecture of a simple RNN, how it maintains an internal 'state' and processes sequences one element at a time.",
+      "Vanishing and Exploding Gradients in RNNs": "Learn about the common problems of vanishing and exploding gradients, which hinder RNNs from learning long-term dependencies effectively.",
+      "Long Short-Term Memory (LSTM) Networks: Solving Gradient Issues": "Explore LSTMs as an improvement over basic RNNs, introducing 'gates' to control the flow of information and mitigate gradient problems.",
+      "Gated Recurrent Units (GRUs): A Simpler Alternative": "Discover GRUs, a more streamlined variant of LSTMs that also use gating mechanisms but with fewer parameters.",
+      "Limitations of RNNs and Their Variants for Long Sequences": "Conclude by understanding that even LSTMs and GRUs still face limitations in parallelization and effectively handling extremely long sequences."
+    },
+    "Word Embeddings for Language Understanding": {
+      "Why Words Need Vector Representations": "Understand the necessity of converting words into numerical vector representations for neural networks to process them effectively.",
+      "One-Hot Encoding and Its Limitations": "Review one-hot encoding as a basic representation and identify its sparsity and inability to capture semantic relationships.",
+      "Word2Vec: Learning Word Relationships": "Explore the core ideas behind Word2Vec (Skip-gram and CBOW models) that learn dense vector embeddings by predicting surrounding words or a target word.",
+      "GloVe: Global Vectors for Word Representation": "Learn about GloVe, which combines global matrix factorization and local context window methods to generate word embeddings.",
+      "Contextual Embeddings: A Glimpse into the Future": "Briefly touch upon the concept of contextual embeddings, where a word's meaning (and thus its vector) can change based on its surrounding words."
+    },
+    "The Attention Mechanism": {
+      "The Core Idea of Attention: Focusing on Relevant Parts": "Understand attention as a mechanism that allows models to dynamically weigh the importance of different parts of the input sequence.",
+      "Query, Key, and Value: The Attention Building Blocks": "Learn about the three fundamental components (Query, Key, Value) that interact to compute attention scores.",
+      "Dot-Product Attention: Simple and Effective": "Explore how attention scores are calculated using dot products between queries and keys, followed by a softmax function.",
+      "Softmax and Weighted Sums: Producing Context Vectors": "Understand how softmax normalizes attention scores and how these scores are used to create a weighted sum of values, forming a context vector.",
+      "Advantages over RNNs: Parallelization and Long-Range Dependencies": "Discuss how attention mechanisms allow for parallel computation and can directly model long-range dependencies, overcoming RNN limitations."
+    },
+    "Transformer Architecture: The Encoder": {
+      "Transformer Overview: An Encoder-Decoder Structure": "Introduce the overall architecture of the Transformer, emphasizing its encoder-decoder design and reliance on attention.",
+      "Self-Attention Mechanism: Intra-Sequence Relationships": "Dive into self-attention, where each word in a sequence attends to all other words in the *same* sequence to compute a richer representation.",
+      "Multi-Head Attention: Diverse Perspectives on Attention": "Understand how multi-head attention runs several self-attention mechanisms in parallel, allowing the model to focus on different aspects of the input simultaneously.",
+      "Positional Encoding: Injecting Sequence Order": "Learn how Transformers, lacking recurrence, use positional encodings to inject information about the relative or absolute position of tokens in the sequence.",
+      "Feed-Forward Networks and Residual Connections in the Encoder": "Explore the role of position-wise feed-forward networks and residual connections followed by layer normalization within the encoder block."
+    },
+    "Transformer Architecture: The Decoder": {
+      "Decoder Structure: Masked Self-Attention and Encoder-Decoder Attention": "Understand the components of the Transformer decoder, including its two main attention sub-layers.",
+      "Masked Multi-Head Self-Attention: Preventing Future Information Leakage": "Learn about masked self-attention in the decoder, which ensures that predictions for a given position only depend on known outputs up to that position.",
+      "Encoder-Decoder Multi-Head Attention: Relating Input to Output": "Discover how the decoder's second attention layer allows it to attend to the output of the encoder, linking the source and target sequences.",
+      "Decoder Output Layer: Generating Predictions": "Understand how the final output of the decoder passes through a linear layer and softmax to produce probabilities over the vocabulary for the next token.",
+      "Putting it Together: The Full Transformer Forward Pass": "Trace the flow of information through both the encoder and decoder to gain a holistic view of the Transformer's operation for tasks like machine translation."
+    },
+    "Training and Applications of Transformers": {
+      "Training Transformers: Optimizers, Learning Rates, and Scheduling": "Understand the practical aspects of training large Transformer models, including specific optimizers (e.g., AdamW) and learning rate schedules.",
+      "Inference with Transformers: Autoregressive Decoding": "Learn how trained Transformers generate sequences during inference, typically in an autoregressive manner, one token at a time.",
+      "Pre-training and Fine-tuning Paradigms": "Explore the highly effective pre-training on large unsupervised corpora and subsequent fine-tuning on specific downstream tasks.",
+      "BERT, GPT, and Beyond: Popular Transformer Models": "Briefly introduce seminal Transformer-based models like BERT (encoder-only) and GPT (decoder-only) and their impact on NLP.",
+      "Real-World Applications: NLP, Vision, and More": "Discover diverse applications of Transformers beyond text, including computer vision (Vision Transformers) and other domains, highlighting their versatility."
+    }
+  }
+}
