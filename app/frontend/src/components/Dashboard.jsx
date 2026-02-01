@@ -6,18 +6,22 @@ import {
     LogOut,
     LayoutDashboard
 } from 'lucide-react';
+import axios from 'axios';
+import { API_BASE_URL } from '../api';
 import LearnTopicFlow from './LearnTopicFlow';
 import TopicDashboard from './TopicDashboard';
 import RoadmapView from './RoadmapView';
+import LessonView from './LessonView';
 
 const Dashboard = () => {
     const [isDarkMode, setIsDarkMode] = useState(
         window.matchMedia('(prefers-color-scheme: dark)').matches
     );
 
-    // Views: 'dashboard' | 'create' | 'roadmap'
+    // Views: 'dashboard' | 'create' | 'roadmap' | 'lesson'
     const [view, setView] = useState('dashboard');
     const [activeTopic, setActiveTopic] = useState(null);
+    const [currentLesson, setCurrentLesson] = useState(null); // { topic, chapter, lesson }
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -39,7 +43,95 @@ const Dashboard = () => {
 
     const handleBackToDashboard = () => {
         setActiveTopic(null);
+        setCurrentLesson(null);
         setView('dashboard');
+    };
+
+    const handleBackToRoadmap = () => {
+        setCurrentLesson(null);
+        setView('roadmap');
+    };
+
+    const handleStartLesson = (chapter, lesson) => {
+        setCurrentLesson({
+            topic: activeTopic,
+            chapter,
+            lesson
+        });
+        setView('lesson');
+    };
+
+    const handleLessonComplete = async () => {
+        if (!currentLesson) return;
+
+        // 1. Find the next lesson (simple logic: current lesson + 1, or next chapter)
+        // ideally backend calculates this, but for now we essentially assume the backend updates progress.
+        // We need to call the "complete" endpoint.
+
+        // However, looking at the backend API, completion takes { topic, current_chapter, current_lesson, next_chapter, next_lesson }
+        // The backend `update_progress` relies on US telling it what the next one is.
+        // This means we need the Roadmap structure to know what comes next.
+        // For simplicity in this iteration, we will just mark the CURRENT one as done.
+        // ACTUALLY, the spec says "Unlock next lesson".
+        // Let's rely on the backend to be smart, OR we calculate 'next' here if we had the roadmap.
+        // Since we don't have the roadmap handy in Dashboard easily without fetching it again,
+        // we might need to fetch the roadmap OR pass it up from LessonView?
+        // 
+        // Better approach for now:
+        // Just call a simplified completion endpoint if possible. 
+        // But since we built `POST /api/lessons/complete` expecting `next_chapter` etc...
+        // We will fetch the roadmap briefly here or rely on the fact that when we go back to RoadmapView, it fetches progress.
+        // ALL WE NEED TO DO is send the payload.
+        //
+        // WAIT: The backend `complete_lesson` function updates `completed_lessons` list with the `current` one.
+        // It updates `current_chapter` and `current_lesson` to the `next` arguments.
+        // So we DO need to know what's next.
+
+        try {
+            // Fetch roadmap to determine next lesson
+            const roadmapRes = await axios.get(`${API_BASE_URL}/api/roadmaps/${activeTopic}`);
+            const roadmapResult = roadmapRes.data.roadmap;
+
+            let nextChapter = currentLesson.chapter;
+            let nextLessonTitle = currentLesson.lesson;
+
+            // Find current position
+            const chapters = Object.keys(roadmapResult);
+            const currentChapIdx = chapters.indexOf(currentLesson.chapter);
+
+            if (currentChapIdx !== -1) {
+                const lessons = Object.keys(roadmapResult[currentLesson.chapter]);
+                const currentLessonIdx = lessons.indexOf(currentLesson.lesson);
+
+                if (currentLessonIdx < lessons.length - 1) {
+                    // Next lesson in same chapter
+                    nextLessonTitle = lessons[currentLessonIdx + 1];
+                } else if (currentChapIdx < chapters.length - 1) {
+                    // Next chapter
+                    nextChapter = chapters[currentChapIdx + 1];
+                    const nextChapLessons = Object.keys(roadmapResult[nextChapter]);
+                    nextLessonTitle = nextChapLessons[0];
+                } else {
+                    // Course completed? Keep as is or mark finished?
+                    // For now, just keep at last lesson
+                }
+            }
+
+            await axios.post(`${API_BASE_URL}/api/lessons/complete`, {
+                topic: activeTopic,
+                current_chapter: currentLesson.chapter,
+                current_lesson: currentLesson.lesson,
+                next_chapter: nextChapter,
+                next_lesson: nextLessonTitle
+            });
+
+            // Return to roadmap
+            handleBackToRoadmap();
+
+        } catch (err) {
+            console.error("Failed to mark lesson complete", err);
+            alert("Failed to save progress. Please try again.");
+        }
     };
 
     return (
@@ -96,6 +188,17 @@ const Dashboard = () => {
                     <RoadmapView
                         topic={activeTopic}
                         onBack={handleBackToDashboard}
+                        onLessonSelect={handleStartLesson}
+                    />
+                )}
+
+                {view === 'lesson' && currentLesson && (
+                    <LessonView
+                        topic={currentLesson.topic}
+                        chapter={currentLesson.chapter}
+                        lesson={currentLesson.lesson}
+                        onBack={handleBackToRoadmap}
+                        onComplete={handleLessonComplete}
                     />
                 )}
             </main>
