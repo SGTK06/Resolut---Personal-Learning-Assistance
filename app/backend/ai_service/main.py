@@ -143,6 +143,7 @@ async def health_check():
 
 
 from agents.planning_agent.planning_inference import run_planning_agent
+from agents.teaching_agent.teaching_inference import run_teaching_agent
 
 class PlanningRequest(BaseModel):
     topic: str
@@ -189,6 +190,46 @@ async def generate_roadmap(request: PlanningRequest):
         raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
         print(f"Error in AI Service planning: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+class TeachingRequest(BaseModel):
+    topic: str
+    chapter_title: str
+    lesson_title: str
+    context: Optional[List[Dict[str, Any]]] = None
+    device_callback_url: Optional[str] = None
+
+@app.post("/api/ai/teaching")
+async def generate_lesson_endpoint(request: TeachingRequest):
+    """
+    Generate lesson content using local RAG context.
+    """
+    try:
+        context_chunks = request.context or []
+        
+        # If no context provided but we have a callback, could fetch more here 
+        # (though Local Service usually provides it)
+        if not context_chunks and request.device_callback_url:
+             tool_client = create_tool_client(request.device_callback_url)
+             query = f"{request.topic} {request.chapter_title} {request.lesson_title}"
+             context_chunks = await tool_client.search_knowledge_base(query, top_k=5)
+
+        # Run the teaching agent
+        lesson_content = run_teaching_agent(
+            request.topic,
+            request.chapter_title,
+            request.lesson_title,
+            context=context_chunks
+        )
+        
+        return {
+            "lesson_content": lesson_content,
+            "context_used": len(context_chunks) > 0
+        }
+    except Exception as e:
+        print(f"Error in AI Service teaching: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

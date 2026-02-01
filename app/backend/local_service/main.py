@@ -24,10 +24,18 @@ from pathlib import Path
 try:
     from .rag import get_indexer, search_knowledge_base
     from .roadmap_storage import save_roadmap, get_roadmap, delete_roadmap, _load_roadmaps
+    from .lesson_storage import (
+        save_lesson_content, get_lesson_content, get_progress, 
+        init_progress, update_progress
+    )
 except ImportError:
     # Fallback for running directly potentially
     from rag import get_indexer, search_knowledge_base
     from roadmap_storage import save_roadmap, get_roadmap, delete_roadmap, _load_roadmaps
+    from lesson_storage import (
+        save_lesson_content, get_lesson_content, get_progress, 
+        init_progress, update_progress
+    )
 
 app = FastAPI(title="Resolut Local Service")
 
@@ -319,6 +327,112 @@ async def proxy_planning(request: dict):
             raise HTTPException(status_code=e.response.status_code, detail=f"AI Service error: {e.response.text}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to connect to AI Service: {e}")
+
+# =============================================================================
+# Lesson Learning Endpoints
+# =============================================================================
+
+class StartLessonRequest(BaseModel):
+    topic: str
+    chapter: str
+    lesson: str
+
+@app.post("/api/lessons/start")
+async def start_lesson(request: StartLessonRequest):
+    """
+    Start a lesson.
+    Checks for local content first. If missing, calls AI service to generate it.
+    """
+    # 1. Check if lesson exists locally
+    existing_content = get_lesson_content(request.topic, request.chapter, request.lesson)
+    if existing_content:
+        return existing_content.dict()
+    
+    # 2. If not, generate it via AI Service
+    # First, get context about the lesson topic
+    search_query = f"{request.topic} {request.chapter} {request.lesson}"
+    context_chunks = search_knowledge_base(search_query, top_k=5)
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            payload = {
+                "topic": request.topic,
+                "chapter_title": request.chapter,
+                "lesson_title": request.lesson,
+                "context": context_chunks,
+                "device_callback_url": LOCAL_SERVICE_URL
+            }
+            
+            response = await client.post(
+                f"{AI_SERVICE_URL}/api/ai/teaching",
+                json=payload,
+                timeout=120.0
+            )
+            response.raise_for_status()
+            generated_data = response.json()
+            
+            # 3. Save to local storage
+            lesson_content = generated_data["lesson_content"]
+            # Ensure it matches our model (add topic/chapter/lesson if missing from AI response, 
+            # though AI service should probably return them)
+            
+            # Verify structure or construct object
+            final_content = {
+                "topic": request.topic,
+                "chapter": request.chapter,
+                "lesson_title": request.lesson,
+                "content_markdown": lesson_content.get("content_markdown", ""),
+                "questions": lesson_content.get("questions", [])
+            }
+            
+            # Save it
+            from lesson_storage import LessonContent
+            save_lesson_content(LessonContent.parse_obj(final_content))
+            
+            # Initialize progress if first time
+            init_progress(request.topic, request.chapter, request.lesson)
+            
+            return final_content
+            
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=e.response.status_code, detail=f"AI Service error: {e.response.text}")
+        except Exception as e:
+            print(f"Error generating lesson: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to generate lesson: {str(e)}")
+
+
+@app.get("/api/lessons/progress/{topic}")
+async def get_topic_progress(topic: str):
+    """Get learning progress for a topic."""
+    progress = get_progress(topic)
+    if not progress:
+        return {"status": "not_started"}
+    return progress.dict()
+
+
+class CompleteLessonRequest(BaseModel):
+    topic: str
+    current_chapter: str
+    current_lesson: str
+    next_chapter: str
+    next_lesson: str
+
+@app.post("/api/lessons/complete")
+async def complete_lesson(request: CompleteLessonRequest):
+    """
+    Mark a lesson as complete and unlock the next one.
+    """
+    # Create a unique ID for the completed lesson
+    completed_id = f"{request.current_chapter}: {request.current_lesson}"
+    
+    update_progress(
+        request.topic,
+        request.next_chapter,
+        request.next_lesson,
+        completed_id
+    )
+    return {"status": "success", "next_lesson": request.next_lesson}
+
 
 
 if __name__ == "__main__":
