@@ -206,6 +206,7 @@ async def generate_lesson_endpoint(request: TeachingRequest):
     """
     Generate lesson content using local RAG context.
     """
+    print(f"DEBUG: AI Service received teaching request for '{request.lesson_title}'")
     try:
         context_chunks = request.context or []
         
@@ -221,7 +222,8 @@ async def generate_lesson_endpoint(request: TeachingRequest):
             request.topic,
             request.chapter_title,
             request.lesson_title,
-            context=context_chunks
+            context=context_chunks,
+            device_callback_url=request.device_callback_url
         )
         
         return {

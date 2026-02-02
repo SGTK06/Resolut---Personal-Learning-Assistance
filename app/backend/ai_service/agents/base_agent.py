@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
-from langchain.agents import create_agent
 from langchain_core.output_parsers import PydanticOutputParser
+from langgraph.prebuilt import create_react_agent
 
 
 class BaseAgent(ABC):
@@ -41,33 +41,81 @@ class BaseAgent(ABC):
 
         # If we have a structured output parser, add its format instructions
         # to the system prompt so the model knows how to respond.
+        self.system_prompt = system_prompt
         if self._output_parser:
-            system_prompt += f"\n\n{self._output_parser.get_format_instructions()}"
+            self.system_prompt += f"\n\n{self._output_parser.get_format_instructions()}"
 
-        # LangGraph-based agent
-        self.agent = create_agent(
-            model=self.llm,
-            system_prompt=SystemMessage(content=system_prompt),
-            tools=tools,
-        )
+        # LangGraph-based agent (only if tools are provided)
+        self.tools = tools
+        self.agent = None
+        if tools:
+            # We use a broader check for state_modifier vs system_message
+            # depending on the langgraph version. 
+            # For robustness, we'll try to use create_react_agent with the state_modifier
+            # but if it fails we'll fallback to LLM direct call if possible.
+            try:
+                self.agent = create_react_agent(
+                    model=self.llm,
+                    state_modifier=self.system_prompt,
+                    tools=tools,
+                )
+            except TypeError:
+                # Fallback for older versions of langgraph
+                self.agent = create_react_agent(
+                    model=self.llm,
+                    messages=[SystemMessage(content=self.system_prompt)],
+                    tools=tools,
+                )
 
     def invoke(self, user_input: str):
-        result = self.agent.invoke(
-            {
-                "messages": [
-                    HumanMessage(content=user_input)
-                ]
-            }
-        )
+        if self.agent:
+            result = self.agent.invoke(
+                {
+                    "messages": [
+                        HumanMessage(content=user_input)
+                    ]
+                }
+            )
+            last_message = result["messages"][-1]
+            final_output = last_message.content
+        else:
+            # Simple LLM call for tool-less agents
+            messages = [
+                SystemMessage(content=self.system_prompt),
+                HumanMessage(content=user_input)
+            ]
+            response = self.llm.invoke(messages)
+            final_output = response.content
 
-        final_output = result["messages"][-1].content
+        # Handle list-based content (common with some Gemini versions/multimodal)
+        if isinstance(final_output, list):
+            final_output = "".join([
+                item.get("text", "") if isinstance(item, dict) else str(item)
+                for item in final_output
+            ])
 
         if self._output_parser:
-            if not isinstance(final_output, str):
+            if not isinstance(final_output, str) or not final_output.strip():
+                print(f"DEBUG - Final output: {final_output}")
                 raise ValueError(
                     "Agent did not return a text response suitable "
                     "for structured parsing."
                 )
-            return self._output_parser.parse(final_output)
+            
+            try:
+                return self._output_parser.parse(final_output)
+            except Exception as e:
+                print(f"DEBUG - Parsing failed for output: {final_output}")
+                print(f"DEBUG - Error: {e}")
+                # Try simple cleaning: remove ```json and ``` if present
+                cleaned_output = final_output.strip()
+                if cleaned_output.startswith("```json"):
+                    cleaned_output = cleaned_output[7:]
+                if cleaned_output.endswith("```"):
+                    cleaned_output = cleaned_output[:-3]
+                try:
+                    return self._output_parser.parse(cleaned_output.strip())
+                except:
+                    raise e # Re-raise original error if cleaning fails
 
         return final_output

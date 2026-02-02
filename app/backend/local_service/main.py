@@ -343,18 +343,19 @@ async def start_lesson(request: StartLessonRequest):
     Start a lesson.
     Checks for local content first. If missing, calls AI service to generate it.
     """
-    # 1. Check if lesson exists locally
-    existing_content = get_lesson_content(request.topic, request.chapter, request.lesson)
-    if existing_content:
-        return existing_content.dict()
-    
-    # 2. If not, generate it via AI Service
-    # First, get context about the lesson topic
-    search_query = f"{request.topic} {request.chapter} {request.lesson}"
-    context_chunks = search_knowledge_base(search_query, top_k=5)
-    
-    async with httpx.AsyncClient() as client:
-        try:
+    print(f"DEBUG: Starting lesson request for topic='{request.topic}', chapter='{request.chapter}', lesson='{request.lesson}'")
+    try:
+        # 1. Check if lesson exists locally
+        existing_content = get_lesson_content(request.topic, request.chapter, request.lesson)
+        if existing_content:
+            return existing_content.dict()
+        
+        # 2. If not, generate it via AI Service
+        # First, get context about the lesson topic
+        search_query = f"{request.topic} {request.chapter} {request.lesson}"
+        context_chunks = search_knowledge_base(search_query, top_k=5)
+        
+        async with httpx.AsyncClient() as client:
             payload = {
                 "topic": request.topic,
                 "chapter_title": request.chapter,
@@ -373,10 +374,7 @@ async def start_lesson(request: StartLessonRequest):
             
             # 3. Save to local storage
             lesson_content = generated_data["lesson_content"]
-            # Ensure it matches our model (add topic/chapter/lesson if missing from AI response, 
-            # though AI service should probably return them)
             
-            # Verify structure or construct object
             final_content = {
                 "topic": request.topic,
                 "chapter": request.chapter,
@@ -394,11 +392,11 @@ async def start_lesson(request: StartLessonRequest):
             
             return final_content
             
-        except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=e.response.status_code, detail=f"AI Service error: {e.response.text}")
-        except Exception as e:
-            print(f"Error generating lesson: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to generate lesson: {str(e)}")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"Error generating lesson: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate lesson: {str(e)}")
 
 
 @app.get("/api/lessons/progress/{topic}")

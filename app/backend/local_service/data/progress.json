@@ -1,9 +1,11 @@
 {
   "Deep Learning": {
     "current_chapter": "Machine Learning Basics",
-    "current_lesson": "Loss Functions: Quantifying Model Error",
+    "current_lesson": "Bias-Variance Trade-off and Overfitting",
     "completed_lessons": [
-      "Machine Learning Basics: Supervised Learning: Input-Output Mapping"
+      "Machine Learning Basics: Supervised Learning: Input-Output Mapping",
+      "Machine Learning Basics: Loss Functions: Quantifying Model Error",
+      "Machine Learning Basics: Optimization Algorithms: Finding the Best Model"
     ]
   }
 }

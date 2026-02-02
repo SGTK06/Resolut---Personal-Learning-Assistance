@@ -81,6 +81,26 @@ class DeviceToolClient:
                 print(f"Error calling search_knowledge_base: {e}")
                 return []
     
+    def search_knowledge_base_sync(
+        self, 
+        query: str, 
+        top_k: int = 5
+    ) -> List[Dict[str, Any]]:
+        """Sync version of search_knowledge_base."""
+        with httpx.Client() as client:
+            try:
+                response = client.post(
+                    f"{self.base_url}/api/tools/search_knowledge_base",
+                    json={"query": query, "top_k": top_k},
+                    timeout=self.timeout
+                )
+                response.raise_for_status()
+                result = response.json()
+                return result.get("results", [])
+            except Exception as e:
+                print(f"Error calling search_knowledge_base_sync: {e}")
+                return []
+    
     async def get_index_stats(self) -> Dict[str, Any]:
         """Get statistics about the user's local FAISS index."""
         async with httpx.AsyncClient() as client:
