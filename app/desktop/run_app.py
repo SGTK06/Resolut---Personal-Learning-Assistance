@@ -48,9 +48,13 @@ def start_frontend_service():
     print("Starting Vite frontend...")
     cwd = ROOT_DIR / "frontend"
     
+    # Set environment variable for direct API connection in desktop mode
+    env = os.environ.copy()
+    env["VITE_API_BASE_URL"] = "http://127.0.0.1:8000"
+    
     # Use shell=True for npm on Windows
     cmd = "npm run dev"
-    return subprocess.Popen(cmd, cwd=cwd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return subprocess.Popen(cmd, cwd=cwd, shell=True, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def get_frontend_url(timeout=30):
     """Wait for Vite to start and return the URL it's using."""

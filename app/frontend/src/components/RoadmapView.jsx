@@ -16,8 +16,8 @@ const RoadmapView = ({ topic, onBack, onLessonSelect }) => {
             try {
                 // Parallel fetch: Roadmap + Progress
                 const [roadmapRes, progressRes] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/api/roadmaps/${topic}`),
-                    axios.get(`${API_BASE_URL}/api/lessons/progress/${topic}`)
+                    axios.get(`${API_BASE_URL}/api/roadmaps/${encodeURIComponent(topic)}`),
+                    axios.get(`${API_BASE_URL}/api/lessons/progress/${encodeURIComponent(topic)}`)
                 ]);
 
                 setRoadmap(roadmapRes.data.roadmap);
@@ -179,8 +179,8 @@ const RoadmapView = ({ topic, onBack, onLessonSelect }) => {
                             >
                                 <div className="flex items-center gap-5">
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl transition-all duration-300 ${isExpanded
-                                            ? 'bg-cyan-600 text-white rotate-3 shadow-lg shadow-cyan-500/20'
-                                            : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                                        ? 'bg-cyan-600 text-white rotate-3 shadow-lg shadow-cyan-500/20'
+                                        : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
                                         }`}>
                                         {idx + 1}
                                     </div>
@@ -208,24 +208,24 @@ const RoadmapView = ({ topic, onBack, onLessonSelect }) => {
                                                 key={lIdx}
                                                 onClick={() => unlocked && onLessonSelect(chapterTitle, lessonTitle)}
                                                 className={`group p-5 rounded-2xl border transition-all duration-200 flex gap-4 items-start ${unlocked
-                                                        ? 'cursor-pointer hover:border-cyan-200 dark:hover:border-cyan-800 bg-white dark:bg-slate-700/30'
-                                                        : 'cursor-not-allowed opacity-60 bg-slate-50 dark:bg-slate-800/50 grayscale'
+                                                    ? 'cursor-pointer hover:border-cyan-200 dark:hover:border-cyan-800 bg-white dark:bg-slate-700/30'
+                                                    : 'cursor-not-allowed opacity-60 bg-slate-50 dark:bg-slate-800/50 grayscale'
                                                     } ${completed
                                                         ? 'bg-teal-50/30 dark:bg-teal-900/10 border-teal-100 dark:border-teal-900/30 shadow-inner'
                                                         : 'border-slate-100 dark:border-slate-700'
                                                     }`}
                                             >
                                                 <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all shrink-0 ${completed
-                                                        ? 'bg-teal-500 border-teal-500 text-white'
-                                                        : unlocked
-                                                            ? 'border-cyan-500 text-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
-                                                            : 'border-slate-300 text-slate-300 dark:border-slate-600 dark:text-slate-600'
+                                                    ? 'bg-teal-500 border-teal-500 text-white'
+                                                    : unlocked
+                                                        ? 'border-cyan-500 text-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
+                                                        : 'border-slate-300 text-slate-300 dark:border-slate-600 dark:text-slate-600'
                                                     }`}>
                                                     {completed ? <CheckCircle2 size={16} /> : unlocked ? <PlayCircle size={16} /> : <Lock size={16} />}
                                                 </div>
                                                 <div className="flex-1">
                                                     <h4 className={`font-bold transition-colors ${completed ? 'text-teal-700 dark:text-teal-400' :
-                                                            unlocked ? 'text-slate-900 dark:text-white group-hover:text-cyan-600' : 'text-slate-400 dark:text-slate-500'
+                                                        unlocked ? 'text-slate-900 dark:text-white group-hover:text-cyan-600' : 'text-slate-400 dark:text-slate-500'
                                                         }`}>
                                                         {lessonTitle}
                                                     </h4>

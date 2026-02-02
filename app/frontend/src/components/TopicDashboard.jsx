@@ -64,7 +64,7 @@ const TopicDashboard = ({ onNewTopic, onViewRoadmap }) => {
 
         setDeleteLoading(topic);
         try {
-            await axios.delete(`${API_BASE_URL}/api/topics/${topic}`);
+            await axios.delete(`${API_BASE_URL}/api/topics/${encodeURIComponent(topic)}`);
             setTopics(topics.filter(t => t !== topic));
         } catch (err) {
             alert('Failed to delete topic: ' + err.message);

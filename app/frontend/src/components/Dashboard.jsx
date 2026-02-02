@@ -89,7 +89,7 @@ const Dashboard = () => {
 
         try {
             // Fetch roadmap to determine next lesson
-            const roadmapRes = await axios.get(`${API_BASE_URL}/api/roadmaps/${activeTopic}`);
+            const roadmapRes = await axios.get(`${API_BASE_URL}/api/roadmaps/${encodeURIComponent(activeTopic)}`);
             const roadmapResult = roadmapRes.data.roadmap;
 
             let nextChapter = currentLesson.chapter;
