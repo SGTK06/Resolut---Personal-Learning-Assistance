@@ -57,3 +57,7 @@ ENV/
 env/
 .vscode/
 .env
+
+
+credentials.json
+token.json

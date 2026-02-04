@@ -39,4 +39,32 @@ python app/desktop/run_app.py
 *This will automatically launch the Local Backend (Port 8000), AI Backend (Port 8001), and the Desktop Window.*
 
 ---
+
+## 📅 Google Calendar Setup (Developer)
+
+To enable the seamless AI scheduling feature, you must configure Google Cloud credentials:
+
+### 1. Create a Google Cloud Project
+- Go to the [Google Cloud Console](https://console.cloud.google.com/).
+- Create a new project named **Resolut**.
+- Search for and **Enable the Google Calendar API**.
+
+### 2. Configure OAuth Consent Screen
+- Select **External** user type.
+- Add your email and the scope: `.../auth/calendar`.
+- Add your own email as a **Test User**.
+
+### 3. Create Credentials
+- Go to **Credentials** -> **Create Credentials** -> **OAuth Client ID**.
+- Application type: **Desktop App**.
+- Copy the **Client ID** and **Client Secret**.
+
+### 4. Set Environment Variables
+Set the following variables in your development environment (or add them to `run_app.py`):
+```bash
+GOOGLE_CALENDAR_CLIENT_ID="your_client_id_here"
+GOOGLE_CALENDAR_CLIENT_SECRET="your_client_secret_here"
+```
+
+---
 *Built for the Encode Hackathon.*
