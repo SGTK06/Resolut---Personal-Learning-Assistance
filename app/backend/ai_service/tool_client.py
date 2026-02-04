@@ -115,6 +115,42 @@ class DeviceToolClient:
                 print(f"Error getting index stats: {e}")
                 return {"error": str(e)}
 
+    async def list_calendar_events(self, max_results: int = 10) -> Dict[str, Any]:
+        """List upcoming events from the user's Google Calendar."""
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(
+                    f"{self.base_url}/api/tools/list_calendar_events",
+                    params={"max_results": max_results},
+                    timeout=self.timeout
+                )
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                print(f"Error listing calendar events: {e}")
+                return {"status": "error", "message": str(e)}
+
+    async def create_calendar_event(self, summary: str, description: str, start_time: str, end_time: str) -> Dict[str, Any]:
+        """Create a new event in the user's Google Calendar."""
+        async with httpx.AsyncClient() as client:
+            try:
+                payload = {
+                    "summary": summary,
+                    "description": description,
+                    "start_time": start_time,
+                    "end_time": end_time
+                }
+                response = await client.post(
+                    f"{self.base_url}/api/tools/create_calendar_event",
+                    json=payload,
+                    timeout=self.timeout
+                )
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                print(f"Error creating calendar event: {e}")
+                return {"status": "error", "message": str(e)}
+
 
 def create_tool_client(device_callback_url: str) -> DeviceToolClient:
     """

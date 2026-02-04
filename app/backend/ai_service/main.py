@@ -27,14 +27,25 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from agents.prerequisites_agent.prerequisite_inference import run_prerequisite_agent
+from agents.planning_agent.planning_inference import run_planning_agent
+from agents.teaching_agent.teaching_inference import run_teaching_agent
+from agents.scheduling_agent.scheduling_inference import run_scheduling_agent
 from tool_client import create_tool_client
 
 app = FastAPI(title="Resolut AI Service")
 
 # Enable CORS
+# Note: When allow_credentials=True, allow_origins cannot be ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -193,6 +204,9 @@ async def generate_roadmap(request: PlanningRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class ScheduleRequest(BaseModel):
+    user_input: str
+    device_callback_url: str
 
 class TeachingRequest(BaseModel):
     topic: str
@@ -231,8 +245,26 @@ async def generate_lesson_endpoint(request: TeachingRequest):
             "context_used": len(context_chunks) > 0
         }
     except Exception as e:
-        print(f"Error in AI Service teaching: {e}")
+        print(f"Error in AI Service teaching: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/ai/schedule")
+async def schedule_endpoint(request: ScheduleRequest):
+    """
+    Interact with the Scheduling Agent.
+    """
+    try:
+        response = await run_scheduling_agent(
+            request.user_input,
+            request.device_callback_url
+        )
+        return {"response": response}
+    except Exception as e:
+        import traceback
+        error_msg = f"Error in AI Service scheduling: {str(e)}"
+        print(error_msg)
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 if __name__ == "__main__":

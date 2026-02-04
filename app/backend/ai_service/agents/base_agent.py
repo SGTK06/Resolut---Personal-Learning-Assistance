@@ -49,30 +49,37 @@ class BaseAgent(ABC):
         self.tools = tools
         self.agent = None
         if tools:
-            # We use a broader check for state_modifier vs system_message
-            # depending on the langgraph version. 
-            # For robustness, we'll try to use create_react_agent with the state_modifier
-            # but if it fails we'll fallback to LLM direct call if possible.
+            # Try to use create_react_agent with the state_modifier (modern)
+            # if that fails, we fallback to prepending the system message in the model or endpoint
             try:
                 self.agent = create_react_agent(
                     model=self.llm,
                     state_modifier=self.system_prompt,
                     tools=tools,
                 )
-            except TypeError:
-                # Fallback for older versions of langgraph
+            except Exception as e:
+                print(f"DEBUG: create_react_agent with state_modifier failed: {e}")
+                # Fallback: Just create without state_modifier 
+                # (The LLM will have to rely on its training or we prepend system msg manually in invoke)
                 self.agent = create_react_agent(
                     model=self.llm,
-                    messages=[SystemMessage(content=self.system_prompt)],
                     tools=tools,
                 )
+                self._fallback_system_prompt = True
+            else:
+                self._fallback_system_prompt = False
 
     def invoke(self, user_input: str):
         if self.agent:
+            # Prepend system prompt if fallback is active
+            final_input = user_input
+            if getattr(self, "_fallback_system_prompt", False):
+                final_input = f"{self.system_prompt}\n\nUSER INPUT: {user_input}"
+
             result = self.agent.invoke(
                 {
                     "messages": [
-                        HumanMessage(content=user_input)
+                        HumanMessage(content=final_input)
                     ]
                 }
             )
@@ -87,6 +94,36 @@ class BaseAgent(ABC):
             response = self.llm.invoke(messages)
             final_output = response.content
 
+        return self._post_process(final_output)
+
+    async def ainvoke(self, user_input: str):
+        if self.agent:
+            # Prepend system prompt if fallback is active
+            final_input = user_input
+            if getattr(self, "_fallback_system_prompt", False):
+                final_input = f"{self.system_prompt}\n\nUSER INPUT: {user_input}"
+
+            result = await self.agent.ainvoke(
+                {
+                    "messages": [
+                        HumanMessage(content=final_input)
+                    ]
+                }
+            )
+            last_message = result["messages"][-1]
+            final_output = last_message.content
+        else:
+            # Simple LLM call for tool-less agents
+            messages = [
+                SystemMessage(content=self.system_prompt),
+                HumanMessage(content=user_input)
+            ]
+            response = await self.llm.ainvoke(messages)
+            final_output = response.content
+
+        return self._post_process(final_output)
+
+    def _post_process(self, final_output):
         # Handle list-based content (common with some Gemini versions/multimodal)
         if isinstance(final_output, list):
             final_output = "".join([

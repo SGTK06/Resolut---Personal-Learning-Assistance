@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Loader2, ArrowLeft, BookOpen, Clock, ChevronDown, ChevronRight, CheckCircle2, Lock, PlayCircle, AlertCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, BookOpen, Clock, ChevronDown, ChevronRight, CheckCircle2, Lock, PlayCircle, AlertCircle, Calendar } from 'lucide-react';
 import { API_BASE_URL } from '../api';
+import SchedulingModal from './SchedulingModal';
 
-const RoadmapView = ({ topic, onBack, onLessonSelect }) => {
+const RoadmapView = ({ topic, onBack, onLessonSelect, isCalendarConnected = false }) => {
     const [roadmap, setRoadmap] = useState(null);
     const [progress, setProgress] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [expandedChapters, setExpandedChapters] = useState({});
+    const [isSchedulingOpen, setIsSchedulingOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -142,9 +144,20 @@ const RoadmapView = ({ topic, onBack, onLessonSelect }) => {
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl -ml-8 -mb-8 pointer-events-none"></div>
 
                 <div className="relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-4 border border-cyan-500/30">
-                        <BookOpen size={12} />
-                        Active Learning Path
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold uppercase tracking-wider border border-cyan-500/30">
+                            <BookOpen size={12} />
+                            Active Learning Path
+                        </div>
+                        {isCalendarConnected && (
+                            <button
+                                onClick={() => setIsSchedulingOpen(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-bold border border-white/20 transition-all backdrop-blur-sm shadow-lg shadow-white/5 active:scale-95"
+                            >
+                                <Calendar size={16} className="text-cyan-400" />
+                                Schedule Study Session
+                            </button>
+                        )}
                     </div>
                     <h1 className="text-4xl md:text-5xl font-black mb-3 tracking-tight leading-tight">{topic}</h1>
                     <div className="flex items-center gap-4 mt-6">
@@ -155,6 +168,12 @@ const RoadmapView = ({ topic, onBack, onLessonSelect }) => {
                     </div>
                 </div>
             </div>
+
+            <SchedulingModal
+                isOpen={isSchedulingOpen}
+                onClose={() => setIsSchedulingOpen(false)}
+                topic={topic}
+            />
 
             {/* Chapters List */}
             <div className="space-y-4">

@@ -4,7 +4,13 @@ import {
     Sun,
     PlusCircle,
     LogOut,
-    LayoutDashboard
+    LayoutDashboard,
+    BookOpen,
+    Settings,
+    Calendar,
+    CheckCircle2,
+    AlertCircle,
+    Loader2
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../api';
@@ -12,6 +18,7 @@ import LearnTopicFlow from './LearnTopicFlow';
 import TopicDashboard from './TopicDashboard';
 import RoadmapView from './RoadmapView';
 import LessonView from './LessonView';
+import SchedulingModal from './SchedulingModal';
 
 const Dashboard = () => {
     const [isDarkMode, setIsDarkMode] = useState(
@@ -21,7 +28,50 @@ const Dashboard = () => {
     // Views: 'dashboard' | 'create' | 'roadmap' | 'lesson'
     const [view, setView] = useState('dashboard');
     const [activeTopic, setActiveTopic] = useState(null);
-    const [currentLesson, setCurrentLesson] = useState(null); // { topic, chapter, lesson }
+    const [currentLesson, setCurrentLesson] = useState(null);
+    const [calendarConnected, setCalendarConnected] = useState(false);
+    const [hasCredentials, setHasCredentials] = useState(false);
+    const [calendarLoading, setCalendarLoading] = useState(false);
+    const [isGeneralSchedulingOpen, setIsGeneralSchedulingOpen] = useState(false);
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                const [statusRes, configRes] = await Promise.all([
+                    axios.get(`${API_BASE_URL}/api/calendar/status`),
+                    axios.get(`${API_BASE_URL}/api/calendar/config-status`)
+                ]);
+                setCalendarConnected(statusRes.data.connected);
+                setHasCredentials(configRes.data.has_credentials);
+            } catch (err) {
+                console.error("Failed to check calendar status", err);
+            }
+        };
+        checkStatus();
+    }, []);
+
+    const handleConnectCalendar = async () => {
+        if (calendarConnected) {
+            setIsGeneralSchedulingOpen(true);
+            return;
+        }
+
+        if (!hasCredentials) {
+            alert("Google Calendar is not configured. Please check README.md for developer setup instructions.");
+            return;
+        }
+
+        setCalendarLoading(true);
+        try {
+            await axios.get(`${API_BASE_URL}/api/calendar/connect`);
+            setCalendarConnected(true);
+        } catch (err) {
+            console.error("Failed to connect calendar:", err);
+            alert("Connection failed. Ensure the Google Calendar API is enabled and your credentials are valid.");
+        } finally {
+            setCalendarLoading(false);
+        }
+    };
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -150,6 +200,25 @@ const Dashboard = () => {
 
                 <div className="flex items-center gap-4">
                     <button
+                        onClick={handleConnectCalendar}
+                        disabled={calendarLoading}
+                        className={`p-2 rounded-lg transition-all flex items-center gap-2 ${calendarConnected
+                            ? 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800'
+                            : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                            }`}
+                        title={calendarConnected ? "Calendar Connected" : "Connect Google Calendar"}
+                    >
+                        {calendarLoading ? (
+                            <Loader2 size={20} className="animate-spin" />
+                        ) : calendarConnected ? (
+                            <Calendar size={20} />
+                        ) : (
+                            <Calendar size={20} className="opacity-50" />
+                        )}
+                        {calendarConnected && <span className="text-xs font-bold uppercase tracking-wider">Connected</span>}
+                    </button>
+
+                    <button
                         onClick={toggleDarkMode}
                         className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all"
                     >
@@ -189,12 +258,13 @@ const Dashboard = () => {
                         topic={activeTopic}
                         onBack={handleBackToDashboard}
                         onLessonSelect={handleStartLesson}
+                        isCalendarConnected={calendarConnected}
                     />
                 )}
 
                 {view === 'lesson' && currentLesson && (
                     <LessonView
-                        topic={currentLesson.topic}
+                        topic={activeTopic}
                         chapter={currentLesson.chapter}
                         lesson={currentLesson.lesson}
                         onBack={handleBackToRoadmap}
@@ -202,6 +272,12 @@ const Dashboard = () => {
                     />
                 )}
             </main>
+
+            <SchedulingModal
+                isOpen={isGeneralSchedulingOpen}
+                onClose={() => setIsGeneralSchedulingOpen(false)}
+                topic="General Learning"
+            />
         </div>
     );
 };
