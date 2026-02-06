@@ -105,7 +105,10 @@ class ActivityMonitor:
                     "scrolls_per_min": round(scrolls_per_min, 1),
                     "keys_per_min": round(keys_per_min, 1),
                     "confidence": round(score, 2),
-                    "is_social": score >= 0.6
+                    # Require minimum scrolling to be considered "social" for intervention
+                    # Even if on a social site, if not scrolling (reading/watching), we ignore?
+                    # User asked: "only show the notification when slow continuous scrolling is detected"
+                    "is_social": (score >= 0.6) and (scrolls_per_min > 10)
                 }
 
             time.sleep(0.25)  # monitor tick (4Hz)

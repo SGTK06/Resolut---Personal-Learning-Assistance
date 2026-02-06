@@ -128,7 +128,8 @@ def run_desktop():
     )
     
     try:
-        webview.start(debug=False)
+        # Enable private mode to avoid loading extensions or persisting state
+        webview.start(debug=False, private_mode=True)
     finally:
         print("\nShutting down all services...")
         # Gracefully stop processes

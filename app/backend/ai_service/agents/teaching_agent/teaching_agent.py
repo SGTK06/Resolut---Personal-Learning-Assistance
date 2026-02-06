@@ -24,7 +24,7 @@ class TeachingAgent(BaseAgent):
            - Provide a brief explanation for the answer."""
 
         super().__init__(
-            gemini_model="gemini-2.0-flash",
+            gemini_model="gemini-2.0-flash-lite",
             gemini_api_key=api_key,
             system_prompt=system_prompt,
             output_structure=LessonOutput

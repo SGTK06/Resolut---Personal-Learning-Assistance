@@ -34,6 +34,7 @@ try:
         is_connected, list_events, create_event, 
         get_calendar_service, get_free_slots, CREDENTIALS_PATH, CALENDAR_DATA_DIR
     )
+    from .lockdown_manager import get_lockdown_manager
 except ImportError:
     # Fallback for running directly potentially
     from rag import get_indexer, search_knowledge_base
@@ -46,6 +47,7 @@ except ImportError:
         is_connected, list_events, create_event, 
         get_calendar_service, get_free_slots, CREDENTIALS_PATH, CALENDAR_DATA_DIR
     )
+    from lockdown_manager import get_lockdown_manager
 
 app = FastAPI(title="Resolut Local Service")
 
@@ -742,8 +744,56 @@ async def complete_lesson(request: CompleteLessonRequest):
         request.next_lesson,
         completed_id
     )
+    
+    # Unlock if in lockdown
+    get_lockdown_manager().set_lockdown(False)
+    
     return {"status": "success", "next_lesson": request.next_lesson}
 
+
+
+
+# =============================================================================
+# Lockdown & Intervention Endpoints
+# =============================================================================
+
+class LockdownSettings(BaseModel):
+    warning_interval_seconds: int
+    negotiation_interval_seconds: int
+
+@app.get("/api/dev/lockdown_settings")
+async def get_lockdown_settings():
+    """Get the current configuration for intervention intervals."""
+    manager = get_lockdown_manager()
+    return manager.get_settings()
+
+@app.post("/api/dev/lockdown_settings")
+async def update_lockdown_settings(settings: LockdownSettings):
+    """Update the configuration for intervention intervals."""
+    manager = get_lockdown_manager()
+    manager.save_settings(settings.dict())
+    return {"status": "success", "settings": manager.get_settings()}
+
+@app.get("/api/lockdown/status")
+async def get_lockdown_status():
+    """Check if the system is currently in lockdown mode."""
+    manager = get_lockdown_manager()
+    return {"is_locked_down": manager.get_status()}
+
+@app.post("/api/lockdown/trigger")
+async def trigger_lockdown():
+    """Trigger the system lockdown (called by monitoring service)."""
+    manager = get_lockdown_manager()
+    manager.set_lockdown(True)
+    return {"status": "success", "message": "Lockdown initiated"}
+
+@app.post("/api/lockdown/unlock")
+async def unlock_lockdown():
+    """Unlock the system (e.g., called after lesson completion)."""
+    manager = get_lockdown_manager()
+    manager.set_lockdown(False)
+    # Note: The background monitor will read this via polling or shared state if integrated
+    return {"status": "success", "message": "Lockdown lifted"}
 
 
 if __name__ == "__main__":
