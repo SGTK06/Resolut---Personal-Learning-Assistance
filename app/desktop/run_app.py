@@ -31,13 +31,13 @@ def start_backend_service(name, folder, port):
     """Run a FastAPI service using uvicorn."""
     kill_port_process(port)
     print(f"Starting {name} on port {port}...")
-    log_file = open(ROOT_DIR / "desktop" / f"{name.lower().replace(' ', '_')}.log", "w")
+    # log_file = open(ROOT_DIR / "desktop" / f"{name.lower().replace(' ', '_')}.log", "w")
     
     # Use 'python -m uvicorn' to ensure it uses the current env
     cmd = [sys.executable, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", str(port)]
     cwd = ROOT_DIR / "backend" / folder
     
-    return subprocess.Popen(cmd, cwd=cwd, stdout=log_file, stderr=log_file)
+    return subprocess.Popen(cmd, cwd=cwd) # Stream to console
 
 def start_frontend_service():
     """Start Vite dev server."""

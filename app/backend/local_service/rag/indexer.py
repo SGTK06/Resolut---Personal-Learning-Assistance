@@ -19,7 +19,7 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 
 class LocalIndexer:

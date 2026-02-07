@@ -1,12 +1,13 @@
 {
   "Deep Learning": {
     "current_chapter": "Fundamentals of Sequence Modeling",
-    "current_lesson": "What are Sequences? Understanding Sequential Data",
+    "current_lesson": "Challenges in Processing Sequences: Long-term Dependencies",
     "completed_lessons": [
       "Machine Learning Basics: Supervised Learning: Input-Output Mapping",
       "Machine Learning Basics: Loss Functions: Quantifying Model Error",
       "Machine Learning Basics: Optimization Algorithms: Finding the Best Model",
-      "Machine Learning Basics: Bias-Variance Trade-off and Overfitting"
+      "Machine Learning Basics: Bias-Variance Trade-off and Overfitting",
+      "Fundamentals of Sequence Modeling: What are Sequences? Understanding Sequential Data"
     ]
   }
 }

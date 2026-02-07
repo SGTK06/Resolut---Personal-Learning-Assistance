@@ -10,16 +10,28 @@ load_dotenv()
 opik.configure()
 
 
-def get_prerequisites_agent(state: PrereqInputState):
-    #Check environment variables to get gemini API key
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY environment variable is not set")
+# Check environment variables to get gemini API key
+api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    # If not set here, it will fail during agent initialization or first call
+    # But for a long-running service, we should ideally have it at startup
+    pass
 
+# Shared agent instance to preserve rate limiter across requests
+_prereq_agent = None
+
+def get_prerequisite_agent_instance():
+    global _prereq_agent
+    if _prereq_agent is None:
+        key = os.getenv("GOOGLE_API_KEY")
+        if not key:
+            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+        _prereq_agent = PrerequisiteAgent(google_api_key=key)
+    return _prereq_agent
+
+def get_prerequisites_agent(state: PrereqInputState):
     try:
-        prereq_agent = PrerequisiteAgent(
-            google_api_key=api_key
-        )
+        prereq_agent = get_prerequisite_agent_instance()
 
         prereq_prompt = f"""What are the prerequisite topics needed
             to learn the Topic: {state['topic']} with focus: {state['focus_area']}"""

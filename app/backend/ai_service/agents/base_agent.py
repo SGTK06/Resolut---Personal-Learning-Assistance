@@ -30,6 +30,7 @@ class BaseAgent(ABC):
             google_api_key=gemini_api_key,
             temperature=0,
             rate_limiter=rate_limiter,
+            max_retries=1,
         )
 
         # Optional structured output parser

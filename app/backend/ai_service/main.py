@@ -20,8 +20,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
-import sys
 from pathlib import Path
+from dotenv import load_dotenv
+import sys
+
+# Load environment variables from ../.env
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # Add the current directory to sys.path to allow importing agents
 sys.path.append(str(Path(__file__).parent))
@@ -245,8 +250,14 @@ async def generate_lesson_endpoint(request: TeachingRequest):
             "context_used": len(context_chunks) > 0
         }
     except Exception as e:
-        print(f"Error in AI Service teaching: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        print(f"Error in AI Service teaching: {error_msg}")
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+             raise HTTPException(
+                status_code=429,
+                detail="AI Service Quota Exceeded. Please try again later or switch models."
+            )
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.post("/api/ai/schedule")
 async def schedule_endpoint(request: ScheduleRequest):

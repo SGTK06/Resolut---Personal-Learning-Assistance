@@ -8,13 +8,21 @@ from dotenv import load_dotenv
 load_dotenv()
 opik.configure()
 
+# Shared agent instance to preserve rate limiter across requests
+_planning_agent = None
+
+def get_planning_agent_instance():
+    global _planning_agent
+    if _planning_agent is None:
+        key = os.getenv("GOOGLE_API_KEY")
+        if not key:
+            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+        _planning_agent = PlanningAgent(google_api_key=key)
+    return _planning_agent
+
 def get_planning_agent(state: CourseStatusInputState):
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY environment variable is not set")
-    
     try:
-        planning_agent = PlanningAgent(google_api_key=api_key)
+        planning_agent = get_planning_agent_instance()
         
         # Construct prompt with RAG context if available
         context_str = ""

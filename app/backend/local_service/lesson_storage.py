@@ -76,7 +76,7 @@ def init_progress(topic: str, first_chapter: str, first_lesson: str):
             current_lesson=first_lesson,
             completed_lessons=[]
         )
-        all_progress[topic] = new_progress.dict()
+        all_progress[topic] = new_progress.model_dump()
         with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
             json.dump(all_progress, f, indent=2)
 
@@ -86,7 +86,7 @@ def update_progress(topic: str, next_chapter: str, next_lesson: str, completed_l
         with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
             all_progress = json.load(f)
     except Exception:
-        ordered_dict = {}
+        all_progress = {}
         
     if topic in all_progress:
         progress = all_progress[topic]
