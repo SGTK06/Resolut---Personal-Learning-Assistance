@@ -7,5 +7,15 @@
       "Machine Learning Basics: Loss Functions: Quantifying Model Error",
       "Machine Learning Basics: Optimization Algorithms: Finding the Best Model"
     ]
+  },
+  "React Web Development": {
+    "current_chapter": "Chapter 1: HTML Essentials",
+    "current_lesson": "HTML Document Structure",
+    "completed_lessons": []
+  },
+  "Software Testing": {
+    "current_chapter": "Chapter 1: Basic Software Concepts",
+    "current_lesson": "Lesson 1: What is Software? Applications and Systems",
+    "completed_lessons": []
   }
 }

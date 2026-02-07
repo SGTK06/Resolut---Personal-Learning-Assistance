@@ -56,6 +56,21 @@ def start_frontend_service():
     cmd = "npm run dev"
     return subprocess.Popen(cmd, cwd=cwd, shell=True, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+def start_scroll_monitor():
+    """Start the floating R indicator overlay."""
+    print("Starting Floating R Indicator...")
+    overlay_dir = ROOT_DIR.parent / "overlay"
+    indicator_path = overlay_dir / "floating_indicator.py"
+    
+    if not indicator_path.exists():
+        print(f"Warning: Floating indicator not found at {indicator_path}")
+        return None
+    
+    log_file = open(ROOT_DIR / "desktop" / "scroll_monitor.log", "w")
+    cmd = [sys.executable, str(indicator_path)]
+    
+    return subprocess.Popen(cmd, cwd=overlay_dir, stdout=log_file, stderr=log_file)
+
 def get_frontend_url(timeout=30):
     """Wait for Vite to start and return the URL it's using."""
     print("Waiting for frontend to be ready...")
@@ -111,6 +126,7 @@ def run_desktop():
     local_process = start_backend_service("Local Service", "local_service", 8000)
     ai_process = start_backend_service("AI Service", "ai_service", 8001)
     frontend_process = start_frontend_service()
+    scroll_monitor_process = start_scroll_monitor()
     
     # 2. Wait for services to be ready
     wait_for_backend([8000, 8001])
@@ -136,7 +152,8 @@ def run_desktop():
         processes = [
             ("Local", local_process), 
             ("AI", ai_process), 
-            ("Frontend", frontend_process)
+            ("Frontend", frontend_process),
+            ("Scroll Monitor", scroll_monitor_process)
         ]
         
         for name, p in processes:

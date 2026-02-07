@@ -54,5 +54,226 @@
       "BERT, GPT, and Beyond: Popular Transformer Models": "Briefly introduce seminal Transformer-based models like BERT (encoder-only) and GPT (decoder-only) and their impact on NLP.",
       "Real-World Applications: NLP, Vision, and More": "Discover diverse applications of Transformers beyond text, including computer vision (Vision Transformers) and other domains, highlighting their versatility."
     }
+  },
+  "React Web Development": {
+    "Chapter 1: HTML Essentials": {
+      "HTML Document Structure": "Learn the basic `<!DOCTYPE html>`, `<html>`, `<head>`, and `<body>` tags.",
+      "Common HTML Elements": "Understand headings, paragraphs, links, images, and lists.",
+      "Forms and Input Elements": "Explore `<form>`, `<input>`, `<textarea>`, `<select>`, and their attributes.",
+      "Semantic HTML": "Discover elements like `<header>`, `<nav>`, `<main>`, `<article>`, `<section>`, `<footer>` for better structure."
+    },
+    "Chapter 2: CSS Styling Basics": {
+      "CSS Selectors and Properties": "Master element, class, ID selectors and common properties like `color`, `font-size`, `background`.",
+      "The Box Model": "Understand `margin`, `border`, `padding`, and `content` for layout and spacing.",
+      "Flexbox Fundamentals": "Learn to create flexible and responsive layouts using `display: flex` and its properties.",
+      "Basic Responsive Design": "Introduce media queries for adapting layouts to different screen sizes and devices."
+    },
+    "Chapter 3: JavaScript Core Concepts": {
+      "Variables and Data Types": "Explore `var`, `let`, `const`, and primitive data types (strings, numbers, booleans, null, undefined).",
+      "Operators and Control Flow": "Understand arithmetic, comparison, logical operators, `if/else`, `switch`, and loops (`for`, `while`).",
+      "Functions and Scope": "Define functions, understand parameters, return values, and variable scope (global, local, block).",
+      "Arrays and Objects": "Learn to work with collections of data using arrays and key-value pairs with objects."
+    },
+    "Chapter 4: Modern JavaScript (ES6+) Features": {
+      "Arrow Functions and Template Literals": "Learn concise function syntax and easy string interpolation with backticks.",
+      "Destructuring and Spread/Rest Operators": "Master extracting values from arrays/objects and copying/merging data.",
+      "Modules (import/export)": "Understand how to organize and reuse code across multiple JavaScript files.",
+      "Classes and Object-Oriented Basics": "Introduce `class` syntax for creating blueprints for objects and inheritance."
+    },
+    "Chapter 5: Asynchronous JavaScript": {
+      "Callbacks and Event Loop": "Understand how asynchronous operations work with callbacks and the JavaScript event loop.",
+      "Promises": "Learn to handle asynchronous operations more cleanly with `Promise` objects and `.then()`, `.catch()`.",
+      "Async/Await": "Master the modern syntax for writing asynchronous code that looks synchronous and is easier to read.",
+      "Error Handling in Async Code": "Implement `try...catch` with `async/await` and `.catch()` with Promises for robust error management."
+    },
+    "Chapter 6: Node.js and Package Management": {
+      "Introduction to Node.js": "Understand what Node.js is, its role in web development, and how it executes JavaScript outside the browser.",
+      "npm/yarn Basics": "Learn to initialize projects, install, update, and remove packages using Node Package Manager (npm) or Yarn.",
+      "`package.json` Explained": "Understand the purpose of `package.json`, including dependencies, devDependencies, and scripts.",
+      "Running Node.js Scripts": "Execute simple JavaScript files using the Node.js runtime from your terminal."
+    },
+    "Chapter 7: HTTP and RESTful APIs": {
+      "HTTP Request Methods": "Understand the common HTTP methods: GET, POST, PUT, DELETE, and PATCH.",
+      "HTTP Status Codes": "Learn common status codes (e.g., 200 OK, 404 Not Found, 500 Internal Server Error) and their meanings.",
+      "REST Principles": "Grasp the core concepts of RESTful architecture for designing and interacting with web services.",
+      "Interacting with APIs": "Practice making simple HTTP requests using the browser's `fetch` API or tools like Postman."
+    },
+    "Chapter 8: Introduction to React & JSX": {
+      "What is React?": "Understand React's purpose, the concept of the Virtual DOM, and its component-based approach.",
+      "Setting Up a React Project": "Use Create React App or Vite to quickly bootstrap a new React development environment.",
+      "JSX Syntax": "Learn to write HTML-like code directly within JavaScript, which React uses to describe UI.",
+      "Rendering Elements": "Understand how React takes your JSX and efficiently renders it to the actual browser DOM."
+    },
+    "Chapter 9: React Components and Props": {
+      "Functional Components": "Create reusable UI pieces using simple JavaScript functions, the modern standard in React.",
+      "Props for Data Flow": "Learn to pass data from parent to child components using 'props' (properties).",
+      "Component Composition": "Build complex user interfaces by combining smaller, independent components.",
+      "PropTypes for Type Checking": "Use `prop-types` to define and validate the expected data types for component props."
+    },
+    "Chapter 10: State Management with `useState` Hook": {
+      "Introduction to State": "Understand the concept of 'state' as mutable data that a component manages internally.",
+      "`useState` Hook": "Learn to declare and update state variables in functional components using the `useState` hook.",
+      "Updating State Immutably": "Best practices for modifying objects and arrays in state to avoid common pitfalls.",
+      "State vs. Props": "Differentiate when to use state (internal, mutable data) versus props (external, immutable data)."
+    },
+    "Chapter 11: Side Effects with `useEffect` Hook": {
+      "`useEffect` for Side Effects": "Perform actions like data fetching, subscriptions, or DOM manipulation after render.",
+      "Dependency Array": "Control when the effect runs by specifying dependencies in the `useEffect` hook's array.",
+      "Cleanup Functions": "Implement cleanup logic within `useEffect` to prevent memory leaks (e.g., unsubscribing).",
+      "Common `useEffect` Patterns": "Explore examples for data fetching, timers, and event listeners with `useEffect`."
+    },
+    "Chapter 12: Conditional Rendering and Lists": {
+      "Conditional Rendering Techniques": "Use `if/else`, ternary operator, and logical `&&` for showing or hiding elements based on conditions.",
+      "Rendering Lists": "Display collections of data (arrays) efficiently using the `map()` method in JSX.",
+      "Keys in Lists": "Understand the critical importance of the `key` prop for performance and stability when rendering lists.",
+      "Fragment for Multiple Elements": "Group multiple elements without adding extra nodes to the DOM using `<React.Fragment>` or `<>`."
+    },
+    "Chapter 13: Event Handling and Forms": {
+      "Handling User Events": "Respond to user interactions like clicks, input changes, and form submissions in React.",
+      "Controlled Components": "Manage form input values by linking them to React state, making them 'controlled'.",
+      "Form Submission": "Handle form submissions, prevent default browser behavior, and process form data.",
+      "Basic Form Validation": "Implement simple client-side validation logic for form inputs to provide immediate feedback."
+    },
+    "Chapter 14: React Router for SPA Navigation": {
+      "Introduction to Client-Side Routing": "Understand how Single Page Applications (SPAs) navigate without full page reloads.",
+      "Setting Up React Router": "Install and configure `react-router-dom` to enable routing in your React application.",
+      "`BrowserRouter`, `Routes`, and `Route`": "Define the structure of your application's routes and their corresponding components.",
+      "`Link` and `NavLink`": "Navigate between different pages declaratively using React Router's navigation components.",
+      "URL Parameters and Nested Routes": "Handle dynamic segments in URLs and create hierarchical routing structures."
+    },
+    "Chapter 15: Global State Management (Context API)": {
+      "Prop Drilling Problem": "Understand the challenge of passing props deeply through many component levels.",
+      "React Context API": "Learn to create and consume context for sharing global state across components without prop drilling.",
+      "`useContext` Hook": "Access context values efficiently in functional components using the `useContext` hook.",
+      "When to Use Context": "Identify appropriate scenarios for using the Context API versus local component state or other solutions."
+    },
+    "Chapter 16: Data Fetching and Display": {
+      "Making HTTP Requests": "Use the browser's `fetch` API or the popular Axios library to retrieve data from external APIs.",
+      "Handling Loading and Error States": "Provide user feedback by managing loading indicators and displaying error messages during data fetching.",
+      "Displaying Fetched Data": "Render dynamic content from API responses into your React components.",
+      "Data Refresh and Polling": "Explore strategies for keeping UI data up-to-date, such as manual refresh or periodic polling."
+    },
+    "Chapter 17: Styling React Applications for SaaS": {
+      "CSS Modules": "Scope CSS locally to components to prevent style conflicts and improve maintainability.",
+      "Styled Components": "Write CSS-in-JS, allowing you to create dynamic and component-specific styles directly in JavaScript.",
+      "Utility-First CSS (Tailwind CSS Intro)": "Learn the basics of a popular utility framework like Tailwind CSS for rapid UI development.",
+      "Integrating UI Component Libraries": "Explore and integrate pre-built UI component libraries like Material-UI or Ant Design for consistent UIs."
+    },
+    "Chapter 18: Authentication and Authorization in React (SaaS)": {
+      "User Authentication Flow": "Implement login, logout, and registration forms, and manage user sessions.",
+      "JSON Web Tokens (JWTs)": "Understand how JWTs are used for secure, stateless session management in web applications.",
+      "Protected Routes": "Create routes that are only accessible to authenticated users, redirecting unauthorized access.",
+      "Role-Based Access Control (RBAC) Concepts": "Implement basic authorization logic to control access based on user roles."
+    },
+    "Chapter 19: Building Reusable UI Components & Design Systems": {
+      "Principles of Reusability": "Design components for flexibility, maintainability, and ease of use across your application.",
+      "Component Library Best Practices": "Organize, document, and version your reusable components effectively.",
+      "Introduction to Storybook": "Use Storybook for isolated component development, testing, and documentation.",
+      "The Concept of a Design System": "Understand how design systems streamline UI development, ensuring consistency and efficiency."
+    },
+    "Chapter 20: Performance Optimization": {
+      "`React.memo` for Component Memoization": "Prevent unnecessary re-renders of functional components when their props haven't changed.",
+      "`useCallback` and `useMemo` Hooks": "Optimize function and value recalculations to improve performance in functional components.",
+      "Lazy Loading and Code Splitting": "Improve initial load times by loading components and code bundles only when needed using `React.lazy` and `Suspense`.",
+      "Profiling React Applications": "Use React DevTools to identify performance bottlenecks and optimize rendering cycles."
+    },
+    "Chapter 21: Testing React Applications": {
+      "Introduction to Testing": "Understand the different types of testing: unit, integration, and end-to-end testing.",
+      "Setting Up Jest and React Testing Library": "Configure your testing environment for React applications.",
+      "Writing Unit Tests for Components": "Test individual components in isolation to ensure they function correctly.",
+      "Simulating User Interactions": "Test component behavior based on user actions like clicks and input changes."
+    },
+    "Chapter 22: Deployment and CI/CD for SaaS": {
+      "Building for Production": "Generate optimized production builds of your React application for deployment.",
+      "Hosting Options": "Deploy your React app to popular platforms like Netlify, Vercel, or AWS Amplify.",
+      "Continuous Integration (CI) Basics": "Automate code quality checks, testing, and builds with CI pipelines.",
+      "Continuous Deployment (CD) Basics": "Automate the deployment process to push new changes to production seamlessly."
+    },
+    "Chapter 23: Backend Integration Patterns for SaaS": {
+      "API Design for Frontend Needs": "Collaborate with backend teams on API contracts that best serve your frontend requirements.",
+      "GraphQL Introduction (Optional but useful for SaaS)": "Understand an alternative to REST for more efficient data fetching.",
+      "WebSockets for Real-time Features": "Implement live updates and interactive features like chat or notifications.",
+      "Serverless Functions (e.g., AWS Lambda, Firebase Functions)": "Integrate with backend logic without managing servers for specific tasks."
+    },
+    "Chapter 24: SaaS-Specific Features & Best Practices": {
+      "Multi-Tenancy Considerations": "Design your application to securely serve multiple independent user organizations.",
+      "Subscription Management Integration": "Integrate with payment gateways like Stripe for handling user subscriptions and billing.",
+      "User Onboarding Flows": "Design and implement effective first-time user experiences to maximize adoption.",
+      "Analytics and Monitoring": "Integrate tools like Google Analytics or Sentry for user behavior insights and error tracking.",
+      "Internationalization (i18n) Basics": "Prepare your application to support multiple languages and locales."
+    }
+  },
+  "Software Testing": {
+    "Chapter 1: Basic Software Concepts": {
+      "Lesson 1: What is Software? Applications and Systems": "Understand the fundamental definition of software, distinguishing between different types like operating systems, applications, and utilities.",
+      "Lesson 2: Core Components: Frontend, Backend, Database": "Learn about the essential architectural layers of most software systems and their respective roles.",
+      "Lesson 3: How Software Interacts with Users and Other Systems": "Explore the basic mechanisms of user interaction, data flow, and communication between different software components."
+    },
+    "Chapter 2: Understanding Software Requirements": {
+      "Lesson 1: The Purpose of Requirements in Software Development": "Grasp why clear and well-defined requirements are the foundation for successful software projects.",
+      "Lesson 2: Functional vs. Non-Functional Requirements Explained": "Differentiate between what the software *does* (functional) and how well it *performs* (non-functional).",
+      "Lesson 3: Characteristics of Good Requirements (SMART)": "Learn the criteria for writing effective requirements: Specific, Measurable, Achievable, Relevant, and Time-bound.",
+      "Lesson 4: Identifying Ambiguity and Gaps in Requirements": "Develop skills to critically review requirements for clarity, completeness, and potential misunderstandings."
+    },
+    "Chapter 3: Introduction to Quality Principles": {
+      "Lesson 1: Defining Quality in Software Context": "Understand what 'quality' means for software, moving beyond just 'bug-free' to encompass user satisfaction and fitness for purpose.",
+      "Lesson 2: The Importance of Quality: Business Impact": "Explore how software quality directly affects business success, user retention, and overall project costs.",
+      "Lesson 3: Quality Control (QC) vs. Quality Assurance (QA) - An Overview": "Get an initial understanding of the difference between reactive defect detection (QC) and proactive defect prevention (QA).",
+      "Lesson 4: Key Quality Attributes (e.g., Reliability, Usability)": "Identify and define common attributes that contribute to overall software quality, such as reliability, performance, security, and usability."
+    },
+    "Chapter 4: SDLC and QA Integration": {
+      "Lesson 1: Review of SDLC Models (Waterfall, Agile, V-Model)": "Revisit different Software Development Life Cycle models and their characteristics.",
+      "Lesson 2: Where QA Fits in the Software Development Life Cycle": "Understand the specific phases within various SDLC models where Quality Assurance activities are performed.",
+      "Lesson 3: The Concept of 'Shift-Left' in QA": "Learn about the modern approach of integrating QA activities earlier in the SDLC to prevent defects.",
+      "Lesson 4: QA Activities Across SDLC Phases": "Detail the specific QA tasks and responsibilities in each stage of the software development process."
+    },
+    "Chapter 5: Fundamentals of Software Testing": {
+      "Lesson 1: What is Software Testing? Goals and Objectives": "Define software testing, its primary goals (e.g., finding defects, ensuring quality), and its importance.",
+      "Lesson 2: Seven Principles of Software Testing": "Learn the universally accepted guiding principles that underpin effective software testing practices.",
+      "Lesson 3: Verification vs. Validation in Testing": "Distinguish between 'Are we building the product right?' (verification) and 'Are we building the right product?' (validation).",
+      "Lesson 4: Common Testing Terminology: Bugs, Defects, Errors, Failures": "Familiarize yourself with the precise definitions of key terms used in the testing domain."
+    },
+    "Chapter 6: Deep Dive into Quality Assurance": {
+      "Lesson 1: The Proactive Nature of Quality Assurance": "Understand QA as a process-oriented approach focused on preventing defects throughout the development lifecycle.",
+      "Lesson 2: Key QA Activities: Process Definition, Reviews, Audits": "Explore the core activities of QA, including establishing standards, conducting reviews, and performing audits.",
+      "Lesson 3: The Role and Responsibilities of a QA Engineer": "Gain insight into the daily tasks, skills, and mindset required for a successful QA professional.",
+      "Lesson 4: Building a Culture of Quality": "Learn how QA contributes to fostering a quality-first mindset across the entire development team and organization."
+    },
+    "Chapter 7: Test Planning and Strategy": {
+      "Lesson 1: Why Test Planning is Crucial": "Understand the importance of a well-defined test plan for organizing and guiding testing efforts.",
+      "Lesson 2: Components of a Comprehensive Test Plan": "Identify the essential sections and information typically included in a robust test plan document.",
+      "Lesson 3: Defining Test Scope, Objectives, and Entry/Exit Criteria": "Learn how to clearly delineate what will and will not be tested, set testing goals, and determine when testing starts and stops.",
+      "Lesson 4: Choosing Appropriate Test Strategies": "Explore different approaches to testing (e.g., risk-based, requirements-based) and how to select the best one for a project."
+    },
+    "Chapter 8: Test Case Design Techniques": {
+      "Lesson 1: What Makes a Good Test Case? Structure and Attributes": "Learn the elements of an effective test case, including preconditions, steps, expected results, and priority.",
+      "Lesson 2: Equivalence Partitioning for Efficient Testing": "Master a technique to divide input data into partitions, reducing the number of test cases needed.",
+      "Lesson 3: Boundary Value Analysis for Edge Cases": "Understand how to identify and test values at the boundaries of input ranges, where defects often occur.",
+      "Lesson 4: Decision Table Testing for Complex Logic": "Learn to use decision tables to systematically test combinations of conditions and actions in complex scenarios."
+    },
+    "Chapter 9: Test Execution and Defect Management": {
+      "Lesson 1: Executing Test Cases and Documenting Results": "Learn the process of running test cases, recording actual outcomes, and comparing them to expected results.",
+      "Lesson 2: The Art of Effective Defect Reporting": "Understand how to write clear, concise, and actionable defect reports that aid developers in reproduction and fixing.",
+      "Lesson 3: Understanding the Defect Life Cycle": "Follow a defect from its discovery through its resolution and verification, understanding each status change.",
+      "Lesson 4: Introduction to Defect Tracking Tools": "Get an overview of common tools (e.g., Jira, Azure DevOps) used to manage and track defects throughout their lifecycle."
+    },
+    "Chapter 10: Types of Software Testing": {
+      "Lesson 1: Functional Testing: Unit, Integration, System, Acceptance": "Explore different levels of functional testing, from individual code components to the entire system and user acceptance.",
+      "Lesson 2: Non-Functional Testing: Performance, Security, Usability": "Understand testing types focused on how well the software performs, its security, and ease of use.",
+      "Lesson 3: Regression Testing: Ensuring No New Bugs": "Learn about testing to ensure that new code changes haven't introduced defects into existing, previously working functionality.",
+      "Lesson 4: Exploratory Testing: Unscripted Discovery": "Discover a hands-on, simultaneous learning, test design, and test execution approach to uncover unexpected issues."
+    },
+    "Chapter 11: Quality Metrics and Reporting": {
+      "Lesson 1: Measuring Quality: Why and What to Measure": "Understand the importance of quantitative metrics in assessing software quality and testing effectiveness.",
+      "Lesson 2: Key Metrics: Defect Density, Test Coverage, Pass/Fail Rate": "Learn about common metrics used to evaluate the quality of the software and the efficiency of the testing process.",
+      "Lesson 3: Creating Effective Test Reports and Dashboards": "Understand how to compile and present test results in clear, informative reports and visual dashboards for stakeholders.",
+      "Lesson 4: Using Metrics for Continuous Process Improvement": "Learn how to analyze quality metrics to identify trends, pinpoint areas for improvement, and enhance QA processes."
+    },
+    "Chapter 12: QA in Agile and DevOps": {
+      "Lesson 1: Adapting QA to Agile Methodologies": "Understand how QA roles and activities evolve within iterative and incremental Agile development frameworks.",
+      "Lesson 2: The Role of QA in DevOps and CI/CD Pipelines": "Explore how QA integrates into Continuous Integration and Continuous Delivery pipelines for faster, more reliable releases.",
+      "Lesson 3: Continuous Testing and Feedback Loops": "Learn about the concept of continuous testing throughout the development cycle and rapid feedback mechanisms.",
+      "Lesson 4: Automation's Role in Modern QA (Brief Introduction)": "Get an overview of how test automation supports speed and efficiency in Agile and DevOps environments."
+    }
   }
 }
