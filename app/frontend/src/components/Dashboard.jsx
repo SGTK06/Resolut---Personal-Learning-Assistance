@@ -19,7 +19,7 @@ import TopicDashboard from './TopicDashboard';
 import RoadmapView from './RoadmapView';
 import LessonView from './LessonView';
 import SchedulingModal from './SchedulingModal';
-
+import logo from '../assets/logo.png';
 const Dashboard = () => {
     const [isDarkMode, setIsDarkMode] = useState(
         window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -126,9 +126,9 @@ const Dashboard = () => {
         // Let's rely on the backend to be smart, OR we calculate 'next' here if we had the roadmap.
         // Since we don't have the roadmap handy in Dashboard easily without fetching it again,
         // we might need to fetch the roadmap OR pass it up from LessonView?
-        // 
+        //
         // Better approach for now:
-        // Just call a simplified completion endpoint if possible. 
+        // Just call a simplified completion endpoint if possible.
         // But since we built `POST /api/lessons/complete` expecting `next_chapter` etc...
         // We will fetch the roadmap briefly here or rely on the fact that when we go back to RoadmapView, it fetches progress.
         // ALL WE NEED TO DO is send the payload.
@@ -192,8 +192,8 @@ const Dashboard = () => {
                     className="flex items-center gap-3 cursor-pointer"
                     onClick={handleBackToDashboard}
                 >
-                    <div className="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                        <span className="text-white font-bold text-xl">R</span>
+                    <div className="w-10 h-10  flex items-center justify-center">
+                        <img src={logo} alt="Resolut Logo" className="w-full h-full object-contain"/>
                     </div>
                     <span className="text-xl font-bold dark:text-white">Resolut</span>
                 </div>
