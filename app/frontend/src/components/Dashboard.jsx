@@ -36,15 +36,26 @@ const Dashboard = () => {
 
     useEffect(() => {
         const checkStatus = async () => {
+            // Check connectivity
             try {
-                const [statusRes, configRes] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/api/calendar/status`),
-                    axios.get(`${API_BASE_URL}/api/calendar/config-status`)
-                ]);
+                const statusRes = await axios.get(`${API_BASE_URL}/api/calendar/status`);
                 setCalendarConnected(statusRes.data.connected);
-                setHasCredentials(configRes.data.has_credentials);
+                if (statusRes.data.error) {
+                    console.warn("Calendar status error:", statusRes.data.error);
+                }
             } catch (err) {
-                console.error("Failed to check calendar status", err);
+                console.error("Failed to check calendar connectivity", err);
+            }
+
+            // Check config
+            try {
+                const configRes = await axios.get(`${API_BASE_URL}/api/calendar/config-status`);
+                setHasCredentials(configRes.data.has_credentials);
+                if (configRes.data.error) {
+                    console.warn("Calendar config error:", configRes.data.error);
+                }
+            } catch (err) {
+                console.error("Failed to check calendar config", err);
             }
         };
         checkStatus();
@@ -57,7 +68,18 @@ const Dashboard = () => {
         }
 
         if (!hasCredentials) {
-            alert("Google Calendar is not configured. Please check README.md for developer setup instructions.");
+            // Try to fetch detailed status to show a better error
+            try {
+                const configRes = await axios.get(`${API_BASE_URL}/api/calendar/config-status`);
+                const details = configRes.data;
+                const pathMsg = details.checked_path ? `\nChecked path: ${details.checked_path}` : "";
+                const envMsg = details.has_env === false ? "\nEnvironment variables not detected." : "";
+                const fileMsg = details.has_file === false ? "\nCredentials file not found." : "";
+
+                alert(`Google Calendar is not configured.\n${envMsg}${fileMsg}${pathMsg}\n\nPlease check README.md for developer setup instructions.`);
+            } catch (err) {
+                alert("Google Calendar is not configured. Please check README.md for developer setup instructions.");
+            }
             return;
         }
 
@@ -193,7 +215,7 @@ const Dashboard = () => {
                     onClick={handleBackToDashboard}
                 >
                     <div className="w-10 h-10  flex items-center justify-center">
-                        <img src={logo} alt="Resolut Logo" className="w-full h-full object-contain"/>
+                        <img src={logo} alt="Resolut Logo" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-xl font-bold dark:text-white">Resolut</span>
                 </div>
@@ -204,18 +226,23 @@ const Dashboard = () => {
                         disabled={calendarLoading}
                         className={`p-2 rounded-lg transition-all flex items-center gap-2 ${calendarConnected
                             ? 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800'
-                            : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                            : hasCredentials
+                                ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
+                                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                             }`}
-                        title={calendarConnected ? "Calendar Connected" : "Connect Google Calendar"}
+                        title={calendarConnected ? "Calendar Connected" : hasCredentials ? "Credentials Found - Click to Connect" : "Connect Google Calendar"}
                     >
                         {calendarLoading ? (
                             <Loader2 size={20} className="animate-spin" />
                         ) : calendarConnected ? (
                             <Calendar size={20} />
+                        ) : hasCredentials ? (
+                            <Calendar size={20} className="text-amber-500" />
                         ) : (
                             <Calendar size={20} className="opacity-50" />
                         )}
                         {calendarConnected && <span className="text-xs font-bold uppercase tracking-wider">Connected</span>}
+                        {!calendarConnected && hasCredentials && <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600">Configured</span>}
                     </button>
 
                     <button
