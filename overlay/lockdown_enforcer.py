@@ -64,31 +64,37 @@ class LockdownEnforcer:
         if self.is_active:
             return
             
-        print("[Lockdown] Activating lockdown...")
+        print("[Lockdown] Activating lockdown (non-blocking)...")
         self.is_active = True
         self.current_topic = topic
         self._stop_event.clear()
         
-        # Get initial completion count
-        self.initial_completed_lessons = self._get_completed_lesson_count()
-        
-        # Close social media immediately
-        self._close_social_media()
-        
-        # Launch Resolut app
-        self._launch_resolut_app()
-        
-        # Start enforcement thread (keeps closing social media)
-        self.enforcement_thread = threading.Thread(
-            target=self._enforcement_loop, daemon=True
-        )
-        self.enforcement_thread.start()
-        
-        # Start monitoring for lesson completion
-        self.monitor_thread = threading.Thread(
-            target=self._monitor_lesson_completion, daemon=True
-        )
-        self.monitor_thread.start()
+        # Start a background thread for the initial blocking tasks
+        # to prevent freezing the UI thread that calls this.
+        def _startup_routine():
+            # 1. Get initial completion count (Network I/O)
+            self.initial_completed_lessons = self._get_completed_lesson_count()
+            
+            # 2. Close social media immediately (Process I/O)
+            self._close_social_media()
+            
+            # 3. Launch Resolut app (Process I/O)
+            self._launch_resolut_app()
+            
+            # 4. Start enforcement loop (keeps closing social media)
+            self.enforcement_thread = threading.Thread(
+                target=self._enforcement_loop, daemon=True
+            )
+            self.enforcement_thread.start()
+            
+            # 5. Start monitoring for lesson completion
+            self.monitor_thread = threading.Thread(
+                target=self._monitor_lesson_completion, daemon=True
+            )
+            self.monitor_thread.start()
+
+        startup_thread = threading.Thread(target=_startup_routine, daemon=True)
+        startup_thread.start()
         
     def deactivate(self):
         """Lift the lockdown."""
@@ -169,9 +175,17 @@ class LockdownEnforcer:
                 print(f"[Lockdown] Failed to close window: {e}")
                 
     def _launch_resolut_app(self):
-        """Launch the Resolut app."""
+        """Launch or focus the Resolut app."""
         try:
-            # Find the app directory
+            # First, try to find and focus the window if it exists
+            hwnd = win32gui.FindWindow(None, 'Resolut Learning Assistant')
+            if hwnd:
+                print("[Lockdown] Found existing Resolut window, focusing...")
+                win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                win32gui.SetForegroundWindow(hwnd)
+                return
+
+            # If not found, launch it
             current_dir = Path(__file__).parent
             app_dir = current_dir.parent / "app"
             run_app_path = app_dir / "desktop" / "run_app.py"

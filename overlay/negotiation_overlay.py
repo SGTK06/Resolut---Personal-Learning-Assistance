@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QApplication, QGraphicsDropShadowEffect
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPropertyAnimation, QEasingCurve, QPoint
 from PyQt6.QtGui import QFont, QColor
 
 try:
@@ -55,18 +55,21 @@ class NegotiationOverlay(QWidget):
         
     def _init_ui(self):
         """Initialize the UI components."""
-        # Window flags: Frameless, Always on Top, Tool window
+        # Window flags: Frameless, Always on Top, bypassing taskbar
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.Tool
+            Qt.WindowType.Tool |
+            Qt.WindowType.SplashScreen
         )
         
         # Enable transparency
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         
-        # Set size
-        self.setFixedSize(POPUP_WIDTH, POPUP_HEIGHT)
+        # Set size constraints
+        self.setMinimumSize(POPUP_WIDTH, POPUP_HEIGHT)
+        self.setMaximumSize(POPUP_WIDTH, POPUP_HEIGHT)
+        self.resize(POPUP_WIDTH, POPUP_HEIGHT)
         
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -78,6 +81,23 @@ class NegotiationOverlay(QWidget):
         container_layout = QVBoxLayout(self.container)
         container_layout.setContentsMargins(25, 25, 25, 25)
         container_layout.setSpacing(15)
+        
+        # Progress Bar
+        self.progress_container = QWidget()
+        self.progress_container.setObjectName("progressBar")
+        self.progress_container.setFixedWidth(POPUP_WIDTH - 100)
+        self.progress_container.setFixedHeight(4)
+        progress_layout = QHBoxLayout(self.progress_container)
+        progress_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.progress_indicator = QWidget()
+        self.progress_indicator.setObjectName("progressIndicator")
+        self.progress_indicator.setFixedHeight(4)
+        progress_layout.addWidget(self.progress_indicator)
+        progress_layout.addStretch()
+        
+        container_layout.addWidget(self.progress_container, 0, Qt.AlignmentFlag.AlignCenter)
+        container_layout.addSpacing(10)
         
         # Icon/Emoji label
         self.icon_label = QLabel("📱")
@@ -129,64 +149,77 @@ class NegotiationOverlay(QWidget):
         shadow.setOffset(0, 10)
         self.container.setGraphicsEffect(shadow)
         
-        # Apply stylesheet
+        # Apply stylesheet for Glassmorphism
         self.setStyleSheet("""
             #container {
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(30, 30, 45, 245),
-                    stop:1 rgba(45, 45, 70, 245)
+                    stop:0 rgba(25, 25, 40, 200),
+                    stop:1 rgba(40, 40, 60, 200)
                 );
-                border: 2px solid rgba(100, 180, 255, 0.5);
-                border-radius: 20px;
+                border: 1px solid rgba(100, 180, 255, 0.3);
+                border-radius: 24px;
             }
             #title {
                 color: #ffffff;
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 20px;
-                font-weight: bold;
+                font-family: 'Outfit', 'Segoe UI', sans-serif;
+                font-size: 24px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
             }
             #body {
-                color: rgba(255, 255, 255, 0.85);
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 14px;
-                line-height: 1.4;
+                color: rgba(255, 255, 255, 0.7);
+                font-family: 'Inter', 'Segoe UI', sans-serif;
+                font-size: 15px;
+                line-height: 1.5;
             }
             #acceptBtn {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #4CAF50,
-                    stop:1 #45a049
-                );
+                background: #00BAFF;
                 color: white;
                 border: none;
-                border-radius: 10px;
-                padding: 12px 20px;
-                font-size: 14px;
+                border-radius: 14px;
+                padding: 14px 24px;
+                font-size: 15px;
                 font-weight: bold;
-                min-width: 120px;
+                min-width: 140px;
             }
             #acceptBtn:hover {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #5CBF60,
-                    stop:1 #55b059
-                );
+                background: #33C7FF;
             }
             #declineBtn {
-                background: rgba(255, 255, 255, 0.1);
-                color: rgba(255, 255, 255, 0.8);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                border-radius: 10px;
-                padding: 12px 20px;
+                background: rgba(255, 255, 255, 0.05);
+                color: rgba(255, 255, 255, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 14px;
+                padding: 14px 24px;
                 font-size: 14px;
-                min-width: 120px;
+                min-width: 140px;
             }
             #declineBtn:hover {
-                background: rgba(255, 255, 255, 0.2);
+                background: rgba(255, 255, 255, 0.1);
                 color: white;
             }
+            #progressBar {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 2px;
+                height: 4px;
+            }
+            #progressIndicator {
+                background: #00BAFF;
+                border-radius: 2px;
+            }
         """)
+
+        # Entry Animation
+        self.opacity_anim = QPropertyAnimation(self, b"windowOpacity")
+        self.opacity_anim.setDuration(400)
+        self.opacity_anim.setStartValue(0.0)
+        self.opacity_anim.setEndValue(1.0)
+        self.opacity_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self.pos_anim = QPropertyAnimation(self, b"pos")
+        self.pos_anim.setDuration(500)
+        self.pos_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
         
     def show_stage(self, stage: int, scroll_minutes: float = 0):
         """
@@ -224,8 +257,23 @@ class NegotiationOverlay(QWidget):
             self.accept_button.setText(MESSAGES["stage3_button"])
             self.decline_button.setVisible(False)
         
+        # Update progress bar
+        progress_width = (POPUP_WIDTH - 100) * (stage / 3)
+        self.progress_indicator.setFixedWidth(int(progress_width))
+        
         self._center_on_screen()
+        
+        # Trigger Animations
+        screen = QApplication.primaryScreen().geometry()
+        center_y = (screen.height() - self.height()) // 2
+        self.pos_anim.setStartValue(self.pos() + QPoint(0, 50))
+        self.pos_anim.setEndValue(self.pos())
+        
         self.show()
+        self.setWindowOpacity(1.0)
+        self.opacity_anim.start()
+        self.pos_anim.start()
+        
         self.raise_()
         self.activateWindow()
         
@@ -271,6 +319,96 @@ class NegotiationOverlay(QWidget):
             self.negotiation_timer.stop()
             self.negotiation_timer = None
         self.hide()
+
+
+class ToastNotification(QWidget):
+    """
+    A small, glassmorphic toast notification for gentle nudges.
+    Appears at the top-right and fades out.
+    """
+    
+    def __init__(self, message, parent=None):
+        super().__init__(parent)
+        self.setWindowFlags(
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.SplashScreen |
+            Qt.WindowType.ToolTip
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
+        
+        self.setFixedSize(300, 80)
+        
+        layout = QVBoxLayout(self)
+        self.container = QWidget()
+        self.container.setObjectName("toastContainer")
+        container_layout = QHBoxLayout(self.container)
+        container_layout.setContentsMargins(15, 10, 15, 10)
+        
+        self.icon = QLabel("💡")
+        self.icon.setFont(QFont("Segoe UI Emoji", 20))
+        
+        self.label = QLabel(message)
+        self.label.setWordWrap(True)
+        self.label.setStyleSheet("color: white; font-family: 'Inter', sans-serif; font-size: 13px;")
+        
+        container_layout.addWidget(self.icon)
+        container_layout.addWidget(self.label)
+        layout.addWidget(self.container)
+        
+        self.setStyleSheet("""
+            #toastContainer {
+                background: rgba(40, 40, 50, 220);
+                border: 1px solid rgba(100, 180, 255, 0.4);
+                border-radius: 15px;
+            }
+        """)
+        
+        # Shadow
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        self.container.setGraphicsEffect(shadow)
+        
+        # Animations
+        self.opacity_anim = QPropertyAnimation(self, b"windowOpacity")
+        self.opacity_anim.setDuration(500)
+        
+        self.pos_anim = QPropertyAnimation(self, b"pos")
+        self.pos_anim.setDuration(500)
+        self.pos_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        
+    def show_toast(self):
+        """Show the toast at top-right."""
+        self.setWindowOpacity(0.0)
+        screen = QApplication.primaryScreen().geometry()
+        start_x = screen.width() - self.width() - 20
+        start_y = -self.height()
+        end_y = 40
+        
+        self.move(start_x, start_y)
+        self.pos_anim.setStartValue(QPoint(start_x, start_y))
+        self.pos_anim.setEndValue(QPoint(start_x, end_y))
+        
+        self.opacity_anim.setStartValue(0.0)
+        self.opacity_anim.setEndValue(1.0)
+        
+        self.show()
+        self.raise_()
+        self.activateWindow()
+        
+        self.pos_anim.start()
+        self.opacity_anim.start()
+        
+        # Auto-hide after 5 seconds
+        QTimer.singleShot(5000, self.fade_out)
+        
+    def fade_out(self):
+        self.opacity_anim.setStartValue(1.0)
+        self.opacity_anim.setEndValue(0.0)
+        self.opacity_anim.finished.connect(self.close)
+        self.opacity_anim.start()
 
 
 # Test the overlay if run directly

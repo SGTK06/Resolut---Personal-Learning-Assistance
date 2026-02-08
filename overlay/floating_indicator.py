@@ -12,8 +12,6 @@ from PyQt6.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, QPoint
 from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QFont
 
-from activity_monitor import ActivityMonitor
-
 
 class FloatingIndicator(QWidget):
     """
@@ -28,13 +26,11 @@ class FloatingIndicator(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.monitor = ActivityMonitor()
         self.is_on_social = False
         self.social_minutes = 0.0
         self.drag_pos = QPoint()
         
         self._init_ui()
-        self._start_monitoring()
         
     def _init_ui(self):
         """Initialize the UI."""
@@ -42,8 +38,7 @@ class FloatingIndicator(QWidget):
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.Tool |
-            Qt.WindowType.X11BypassWindowManagerHint
+            Qt.WindowType.Tool
         )
         
         # Enable transparency
@@ -67,19 +62,8 @@ class FloatingIndicator(QWidget):
         """)
         self.time_label.setGeometry(0, 42, self.SIZE, 15)
         
-    def _start_monitoring(self):
-        """Start the activity monitor and update timer."""
-        self.monitor.start()
-        
-        # Update UI every 500ms
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self._update_display)
-        self.update_timer.start(500)
-        
-    def _update_display(self):
-        """Update the display based on monitoring data."""
-        data = self.monitor.current_data
-        
+    def update_data(self, data):
+        """Update the indicator state from external data."""
         if data:
             self.is_on_social = data.get("is_social", False)
             self.social_minutes = data.get("continuous_minutes", 0.0)
@@ -138,43 +122,6 @@ class FloatingIndicator(QWidget):
             self.move(event.globalPosition().toPoint() - self.drag_pos)
             event.accept()
             
-    def mouseDoubleClickEvent(self, event):
-        """Double-click to show/hide popup menu or info."""
-        if event.button() == Qt.MouseButton.LeftButton:
-            # Print current status to console
-            data = self.monitor.current_data
-            if data:
-                print(f"\n[R Monitor] Current Status:")
-                print(f"  App: {data.get('app', 'unknown')}")
-                print(f"  Title: {data.get('title', '')[:50]}...")
-                print(f"  Is Social: {data.get('is_social', False)}")
-                print(f"  Continuous Time: {data.get('continuous_minutes', 0):.1f} min")
-                print(f"  Confidence: {data.get('confidence', 0)*100:.0f}%")
-                
     def closeEvent(self, event):
         """Clean up on close."""
-        self.monitor.stop()
         event.accept()
-
-
-def main():
-    """Run the floating indicator."""
-    app = QApplication(sys.argv)
-    
-    indicator = FloatingIndicator()
-    indicator.show()
-    
-    print("=" * 40)
-    print("Resolut Floating Monitor Started")
-    print("=" * 40)
-    print("- Green circle: Focused")
-    print("- Red circle: Social media detected")
-    print("- Double-click for status details")
-    print("- Drag to reposition")
-    print("=" * 40)
-    
-    sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()

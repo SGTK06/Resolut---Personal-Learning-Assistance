@@ -13,10 +13,10 @@ from pathlib import Path
 # =============================================================================
 
 # Trigger notification after X minutes of continuous social media scrolling
-SCROLL_DETECTION_THRESHOLD_MINUTES = 2
+SCROLL_DETECTION_THRESHOLD_MINUTES = 1.5
 
 # Wait Y minutes during negotiation before enforcing lockdown
-NEGOTIATION_WAIT_MINUTES = 2
+NEGOTIATION_WAIT_MINUTES = 1.5
 
 # How often to check for lesson completion during lockdown (seconds)
 LESSON_COMPLETION_POLL_INTERVAL = 5
@@ -62,6 +62,14 @@ SOCIAL_MEDIA_KEYWORDS = [
     "snapchat",
     "threads",
     "whatsapp",
+    "discord",
+    "pinterest",
+    "linkedin",
+    "twitch",
+    "tumblr",
+    "netflix",
+    "disney+",
+    "hulu",
 ]
 
 # Browser process names to monitor
