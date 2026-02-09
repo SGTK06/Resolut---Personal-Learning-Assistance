@@ -82,7 +82,8 @@ class HUDWindow(QWidget):
             return
 
         if data["is_social"]:
-            self.status_label.setText("🚨 Social Media Detected")
+            mins = data.get("continuous_minutes", 0)
+            self.status_label.setText(f"🚨 Social Media ({mins:.1f}m)")
             self.status_label.setStyleSheet("color: #ff5555;")
         else:
             self.status_label.setText("✅ Focused")

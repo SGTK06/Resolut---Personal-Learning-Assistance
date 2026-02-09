@@ -20,6 +20,22 @@ import httpx
 from pathlib import Path
 import json
 import datetime
+from dotenv import load_dotenv
+
+# Robust .env loading: Check multiple potential locations
+env_locations = [
+    Path(__file__).resolve().parent.parent / ".env",  # app/backend/.env
+    Path.cwd() / ".env",                              # current working directory
+    Path.cwd() / "app" / "backend" / ".env",          # project root / app / backend / .env
+]
+
+for loc in env_locations:
+    if loc.exists():
+        print(f"[DEBUG] Loading .env from: {loc}")
+        load_dotenv(dotenv_path=loc, override=True)
+        break
+else:
+    print("[DEBUG] No .env file found in expected locations.")
 
 # Import RAG modules
 # Import RAG modules
@@ -34,7 +50,6 @@ try:
         is_connected, list_events, create_event, 
         get_calendar_service, get_free_slots, CREDENTIALS_PATH, CALENDAR_DATA_DIR
     )
-    from .lockdown_manager import get_lockdown_manager
 except ImportError:
     # Fallback for running directly potentially
     from rag import get_indexer, search_knowledge_base
@@ -47,7 +62,6 @@ except ImportError:
         is_connected, list_events, create_event, 
         get_calendar_service, get_free_slots, CREDENTIALS_PATH, CALENDAR_DATA_DIR
     )
-    from lockdown_manager import get_lockdown_manager
 
 app = FastAPI(title="Resolut Local Service")
 
@@ -74,10 +88,13 @@ LOCAL_SERVICE_URL = os.getenv("LOCAL_SERVICE_URL", "http://127.0.0.1:8000")
 # Initialize indexer on startup
 @app.on_event("startup")
 async def startup_event():
-    """Initialize the RAG indexer on service startup."""
+    """Initialize the RAG indexer and trigger scheduling on service startup."""
     # This will load or create the FAISS index
     get_indexer(data_dir="data")
     print("Local RAG indexer initialized")
+    
+    # Trigger scheduling in the background
+    asyncio.create_task(trigger_autonomous_scheduling(is_manual=False))
 
 
 # =============================================================================
@@ -111,8 +128,6 @@ class ScheduleRequest(BaseModel):
 
 class SchedulingSettings(BaseModel):
     auto_schedule: bool = True
-    trigger_time: str = "00:00"
-    last_run: Optional[str] = None
 
 SCHEDULING_SETTINGS_FILE = CALENDAR_DATA_DIR / "scheduling_settings.json"
 
@@ -193,22 +208,54 @@ async def connect_calendar():
 
 @app.get("/api/calendar/status")
 async def calendar_status():
-    """Returns the connection status of the calendar."""
-    return {"connected": is_connected()}
+    """Returns the connection status of the calendar with details."""
+    try:
+        if not TOKEN_PATH.exists():
+            return {"connected": False, "reason": "No token file found", "path": str(TOKEN_PATH.absolute())}
+        
+        from google.oauth2.credentials import Credentials
+        creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), SCOPES)
+        
+        is_valid = bool(creds and (creds.valid or (creds.expired and creds.refresh_token)))
+        
+        return {
+            "connected": is_valid,
+            "reason": "Token found and valid/refreshable" if is_valid else "Token invalid or expired without refresh token",
+            "has_refresh_token": bool(creds.refresh_token) if creds else False,
+            "expired": creds.expired if creds else None,
+            "valid": creds.valid if creds else None
+        }
+    except Exception as e:
+        log_scheduling_event(f"[API] Error in calendar_status: {e}")
+        return {"connected": False, "error": str(e)}
 
 @app.get("/api/calendar/config-status")
 async def calendar_config_status():
     """Checks if credentials are configured via environment or file."""
     import os
     try:
-        has_env = bool(os.getenv("GOOGLE_CALENDAR_CLIENT_ID") and os.getenv("GOOGLE_CALENDAR_CLIENT_SECRET"))
+        env_id = os.getenv("GOOGLE_CALENDAR_CLIENT_ID")
+        env_secret = os.getenv("GOOGLE_CALENDAR_CLIENT_SECRET")
+        has_env = bool(env_id and env_secret)
+        
         has_file = CREDENTIALS_PATH.exists()
-        print(f"[API] Checking for credentials at: {CREDENTIALS_PATH.absolute()} - Found: {has_file}")
-        return {"has_credentials": has_env or has_file}
+        
+        log_msg = f"[API] Credential Check: env={has_env}, file={has_file} ({CREDENTIALS_PATH})"
+        print(log_msg)
+        # Also log to file for debugging
+        log_scheduling_event(log_msg)
+        
+        return {
+            "has_credentials": has_env or has_file,
+            "provider": "env" if has_env else ("file" if has_file else "none"),
+            "has_env": has_env,
+            "has_file": has_file,
+            "checked_path": str(CREDENTIALS_PATH.absolute())
+        }
     except Exception as e:
-        print(f"[API] ERROR in config-status: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        error_msg = f"[API] ERROR in config-status: {str(e)}"
+        print(error_msg)
+        log_scheduling_event(error_msg)
         return {"has_credentials": False, "error": str(e)}
 
 @app.get("/api/tools/list_calendar_events")
@@ -276,7 +323,9 @@ async def get_study_sessions():
                 if start_dt.tzinfo is None:
                     start_dt = start_dt.replace(tzinfo=datetime.timezone.utc)
                 
-                if now <= start_dt <= limit:
+                # Show all sessions for today (from start of day) and tomorrow
+                start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                if start_of_day <= start_dt <= limit:
                     summary = e.get("summary", "").lower()
                     if "study" in summary or "learning" in summary:
                         study_sessions.append({
@@ -297,7 +346,7 @@ async def get_study_sessions():
 
 @app.post("/api/calendar/trigger-now")
 async def manual_trigger_scheduling():
-    """Manually triggers the autonomous AI scheduling agent."""
+    """Manually triggers the autonomous AI scheduling agent (Deprecated, use startup trigger)."""
     log_scheduling_event("MANUAL TRIGGER: 'Schedule Now' button clicked in UI.")
     success = await trigger_autonomous_scheduling(is_manual=True)
     if success:
@@ -349,16 +398,43 @@ def log_scheduling_event(message: str):
         print(f"Error logging event: {e}")
 
 async def trigger_autonomous_scheduling(is_manual=False):
-    """Shares the logic to trigger the remote AI Scheduling Agent."""
+    """
+    Triggers the remote AI Scheduling Agent.
+    Includes logic to prevent duplicate scheduling for the same day.
+    """
+    if not is_connected():
+        log_scheduling_event("Skipping scheduling: Calendar not connected")
+        return False
+
     settings = load_scheduling_settings()
     now = datetime.datetime.now()
-    current_date = now.date()
-    
+    current_date_str = now.date().isoformat()
+
+    # 1. Check if a 'Study Session' already exists for today or tomorrow via API
+    try:
+        from .main import get_study_sessions # Avoid circular if any, but we are in main.py
+        sessions_response = await get_study_sessions()
+        if sessions_response.get("status") == "success" and sessions_response.get("sessions"):
+            # Check if any session is for today
+            has_today_session = any(
+                s.get("start", "").startswith(current_date_str) 
+                for s in sessions_response["sessions"]
+            )
+            if has_today_session:
+                log_scheduling_event(f"Skipping scheduling: Study Session already exists for today ({current_date_str})")
+                # Update last run so we don't keep checking every restart if we decided not to schedule
+                settings.last_run = now.strftime("%Y-%m-%d %H:%M:%S")
+                save_scheduling_settings(settings)
+                return True
+    except Exception as e:
+        log_scheduling_event(f"Warning: Could not check existing sessions: {e}")
+
     log_scheduling_event(f"Triggering autonomous 24h scheduling (Manual: {is_manual})")
     
     async with httpx.AsyncClient() as client:
+        current_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
         payload = {
-            "user_input": f"Autonomous Scheduling Trigger: Current day is {current_date.isoformat()}. Please check my calendar for the NEXT 24 HOURS. If No study session exists already, find a gap and book exactly ONE 1-hour session. DO NOT create duplicate sessions.",
+            "user_input": f"Autonomous Scheduling Trigger: Current date and time is {current_time_str}. Please check my calendar for the NEXT 24 HOURS. If No study session exists already for today, find a gap and book exactly ONE 1-hour session. IMPORTANT: You MUST schedule the session AFTER the current time ({current_time_str}). DO NOT book in the past.",
             "device_callback_url": LOCAL_SERVICE_URL
         }
         try:
@@ -369,41 +445,12 @@ async def trigger_autonomous_scheduling(is_manual=False):
             )
             log_scheduling_event(f"AI Service response: {response.status_code} - {response.text[:100]}")
             
-            # Update last run
-            settings.last_run = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            save_scheduling_settings(settings)
             return True
         except Exception as e:
             log_scheduling_event(f"Failed to trigger AI: {e}")
             return False
 
-def run_auto_scheduler():
-    """
-    Background thread that checks if it's time to auto-schedule study sessions.
-    Runs every minute.
-    """
-    log_scheduling_event("Auto-scheduler thread started.")
-    last_triggered_date = None
-    
-    while True:
-        try:
-            settings = load_scheduling_settings()
-            if settings.auto_schedule:
-                now = datetime.datetime.now()
-                current_time = now.strftime("%H:%M")
-                current_date = now.date()
-                
-                if current_time == settings.trigger_time and current_date != last_triggered_date:
-                    asyncio.run(trigger_autonomous_scheduling(is_manual=False))
-                    last_triggered_date = current_date
-            
-            time.sleep(60) 
-        except Exception as e:
-            log_scheduling_event(f"Error in scheduler loop: {e}")
-            time.sleep(60)
-
-# Start background thread
-threading.Thread(target=run_auto_scheduler, daemon=True).start()
+# Removed background thread as scheduling now happens on startup with daily prevention logic
 
 
 # =============================================================================
@@ -744,56 +791,8 @@ async def complete_lesson(request: CompleteLessonRequest):
         request.next_lesson,
         completed_id
     )
-    
-    # Unlock if in lockdown
-    get_lockdown_manager().set_lockdown(False)
-    
     return {"status": "success", "next_lesson": request.next_lesson}
 
-
-
-
-# =============================================================================
-# Lockdown & Intervention Endpoints
-# =============================================================================
-
-class LockdownSettings(BaseModel):
-    warning_interval_seconds: int
-    negotiation_interval_seconds: int
-
-@app.get("/api/dev/lockdown_settings")
-async def get_lockdown_settings():
-    """Get the current configuration for intervention intervals."""
-    manager = get_lockdown_manager()
-    return manager.get_settings()
-
-@app.post("/api/dev/lockdown_settings")
-async def update_lockdown_settings(settings: LockdownSettings):
-    """Update the configuration for intervention intervals."""
-    manager = get_lockdown_manager()
-    manager.save_settings(settings.dict())
-    return {"status": "success", "settings": manager.get_settings()}
-
-@app.get("/api/lockdown/status")
-async def get_lockdown_status():
-    """Check if the system is currently in lockdown mode."""
-    manager = get_lockdown_manager()
-    return {"is_locked_down": manager.get_status()}
-
-@app.post("/api/lockdown/trigger")
-async def trigger_lockdown():
-    """Trigger the system lockdown (called by monitoring service)."""
-    manager = get_lockdown_manager()
-    manager.set_lockdown(True)
-    return {"status": "success", "message": "Lockdown initiated"}
-
-@app.post("/api/lockdown/unlock")
-async def unlock_lockdown():
-    """Unlock the system (e.g., called after lesson completion)."""
-    manager = get_lockdown_manager()
-    manager.set_lockdown(False)
-    # Note: The background monitor will read this via polling or shared state if integrated
-    return {"status": "success", "message": "Lockdown lifted"}
 
 
 if __name__ == "__main__":

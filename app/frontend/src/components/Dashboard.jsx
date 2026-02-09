@@ -19,14 +19,11 @@ import TopicDashboard from './TopicDashboard';
 import RoadmapView from './RoadmapView';
 import LessonView from './LessonView';
 import SchedulingModal from './SchedulingModal';
-import DevSettings from './DevSettings';
-
+import logo from '../assets/logo.png';
 const Dashboard = () => {
     const [isDarkMode, setIsDarkMode] = useState(
         window.matchMedia('(prefers-color-scheme: dark)').matches
     );
-
-    const [isDevSettingsOpen, setIsDevSettingsOpen] = useState(false);
 
     // Views: 'dashboard' | 'create' | 'roadmap' | 'lesson'
     const [view, setView] = useState('dashboard');
@@ -39,15 +36,26 @@ const Dashboard = () => {
 
     useEffect(() => {
         const checkStatus = async () => {
+            // Check connectivity
             try {
-                const [statusRes, configRes] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/api/calendar/status`),
-                    axios.get(`${API_BASE_URL}/api/calendar/config-status`)
-                ]);
+                const statusRes = await axios.get(`${API_BASE_URL}/api/calendar/status`);
                 setCalendarConnected(statusRes.data.connected);
-                setHasCredentials(configRes.data.has_credentials);
+                if (statusRes.data.error) {
+                    console.warn("Calendar status error:", statusRes.data.error);
+                }
             } catch (err) {
-                console.error("Failed to check calendar status", err);
+                console.error("Failed to check calendar connectivity", err);
+            }
+
+            // Check config
+            try {
+                const configRes = await axios.get(`${API_BASE_URL}/api/calendar/config-status`);
+                setHasCredentials(configRes.data.has_credentials);
+                if (configRes.data.error) {
+                    console.warn("Calendar config error:", configRes.data.error);
+                }
+            } catch (err) {
+                console.error("Failed to check calendar config", err);
             }
         };
         checkStatus();
@@ -60,7 +68,18 @@ const Dashboard = () => {
         }
 
         if (!hasCredentials) {
-            alert("Google Calendar is not configured. Please check README.md for developer setup instructions.");
+            // Try to fetch detailed status to show a better error
+            try {
+                const configRes = await axios.get(`${API_BASE_URL}/api/calendar/config-status`);
+                const details = configRes.data;
+                const pathMsg = details.checked_path ? `\nChecked path: ${details.checked_path}` : "";
+                const envMsg = details.has_env === false ? "\nEnvironment variables not detected." : "";
+                const fileMsg = details.has_file === false ? "\nCredentials file not found." : "";
+
+                alert(`Google Calendar is not configured.\n${envMsg}${fileMsg}${pathMsg}\n\nPlease check README.md for developer setup instructions.`);
+            } catch (err) {
+                alert("Google Calendar is not configured. Please check README.md for developer setup instructions.");
+            }
             return;
         }
 
@@ -129,9 +148,9 @@ const Dashboard = () => {
         // Let's rely on the backend to be smart, OR we calculate 'next' here if we had the roadmap.
         // Since we don't have the roadmap handy in Dashboard easily without fetching it again,
         // we might need to fetch the roadmap OR pass it up from LessonView?
-        // 
+        //
         // Better approach for now:
-        // Just call a simplified completion endpoint if possible. 
+        // Just call a simplified completion endpoint if possible.
         // But since we built `POST /api/lessons/complete` expecting `next_chapter` etc...
         // We will fetch the roadmap briefly here or rely on the fact that when we go back to RoadmapView, it fetches progress.
         // ALL WE NEED TO DO is send the payload.
@@ -195,8 +214,8 @@ const Dashboard = () => {
                     className="flex items-center gap-3 cursor-pointer"
                     onClick={handleBackToDashboard}
                 >
-                    <div className="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
-                        <span className="text-white font-bold text-xl">R</span>
+                    <div className="w-10 h-10  flex items-center justify-center">
+                        <img src={logo} alt="Resolut Logo" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-xl font-bold dark:text-white">Resolut</span>
                 </div>
@@ -207,18 +226,23 @@ const Dashboard = () => {
                         disabled={calendarLoading}
                         className={`p-2 rounded-lg transition-all flex items-center gap-2 ${calendarConnected
                             ? 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800'
-                            : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                            : hasCredentials
+                                ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
+                                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                             }`}
-                        title={calendarConnected ? "Calendar Connected" : "Connect Google Calendar"}
+                        title={calendarConnected ? "Calendar Connected" : hasCredentials ? "Credentials Found - Click to Connect" : "Connect Google Calendar"}
                     >
                         {calendarLoading ? (
                             <Loader2 size={20} className="animate-spin" />
                         ) : calendarConnected ? (
                             <Calendar size={20} />
+                        ) : hasCredentials ? (
+                            <Calendar size={20} className="text-amber-500" />
                         ) : (
                             <Calendar size={20} className="opacity-50" />
                         )}
                         {calendarConnected && <span className="text-xs font-bold uppercase tracking-wider">Connected</span>}
+                        {!calendarConnected && hasCredentials && <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600">Configured</span>}
                     </button>
 
                     <button
@@ -230,13 +254,6 @@ const Dashboard = () => {
                     <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full border-2 border-white dark:border-slate-600 overflow-hidden">
                         <img src="https://ui-avatars.com/api/?name=User" alt="User Avatar" />
                     </div>
-                    <button
-                        onClick={() => setIsDevSettingsOpen(true)}
-                        className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all"
-                        title="Dev Mode Settings"
-                    >
-                        <Settings size={20} />
-                    </button>
                 </div>
             </header>
 
@@ -288,9 +305,6 @@ const Dashboard = () => {
                 onClose={() => setIsGeneralSchedulingOpen(false)}
                 topic="General Learning"
             />
-            {isDevSettingsOpen && (
-                <DevSettings onClose={() => setIsDevSettingsOpen(false)} />
-            )}
         </div>
     );
 };

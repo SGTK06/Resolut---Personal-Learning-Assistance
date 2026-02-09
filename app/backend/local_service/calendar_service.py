@@ -13,7 +13,8 @@ from googleapiclient.errors import HttpError
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-CALENDAR_DATA_DIR = Path(__file__).parent / "data" / "calendar"
+# Ensure paths are absolute by using .resolve()
+CALENDAR_DATA_DIR = Path(__file__).resolve().parent / "data" / "calendar"
 TOKEN_PATH = CALENDAR_DATA_DIR / "token.json"
 CREDENTIALS_PATH = CALENDAR_DATA_DIR / "credentials.json"
 
