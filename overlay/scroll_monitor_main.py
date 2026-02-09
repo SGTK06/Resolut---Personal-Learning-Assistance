@@ -91,6 +91,9 @@ class ScrollMonitor:
         # 3. Handle lockdown lifting
         self.enforcer.on_lockdown_lifted = self.monitor.reset_duration
         
+        # 4. Handle indicator click (Open App)
+        self.indicator.clicked.connect(self._handle_indicator_clicked)
+        
         # When user accepts (clicks Open Resolut)
         def on_accepted():
             print("[ScrollMonitor] User accepted - opening Resolut")
@@ -110,6 +113,11 @@ class ScrollMonitor:
             print(f"[ScrollMonitor] User declined stage {self.overlay.current_stage}")
             
         self.overlay.declined.connect(on_declined)
+
+    def _handle_indicator_clicked(self):
+        """Handle click on the floating R icon."""
+        print("[ScrollMonitor] Indicator clicked - launching app")
+        self.enforcer._launch_resolut_app()
 
     def _handle_social_detected(self, data: dict):
         """Handle signal from monitor thread about active social media (Main Thread)."""
@@ -149,6 +157,12 @@ class ScrollMonitor:
         
         menu = QMenu()
         
+        launch_action = QAction("Open Resolut", menu)
+        launch_action.triggered.connect(self.enforcer._launch_resolut_app)
+        menu.addAction(launch_action)
+        
+        menu.addSeparator()
+        
         pause_action = QAction("Pause Monitoring", menu)
         pause_action.triggered.connect(self._toggle_pause)
         menu.addAction(pause_action)
@@ -159,12 +173,63 @@ class ScrollMonitor:
         
         menu.addSeparator()
         
+        # Start with Windows
+        self.startup_action = QAction("Start with Windows", menu, checkable=True)
+        self.startup_action.setChecked(self._is_startup_enabled())
+        self.startup_action.triggered.connect(self._toggle_startup)
+        menu.addAction(self.startup_action)
+        
+        menu.addSeparator()
+        
         quit_action = QAction("Quit", menu)
         quit_action.triggered.connect(self.app.quit)
         menu.addAction(quit_action)
         
         self.tray_icon.setContextMenu(menu)
         self.tray_icon.show()
+        
+    def _is_startup_enabled(self) -> bool:
+        """Check if the app is registered for Windows startup."""
+        if sys.platform != 'win32':
+            return False
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_READ)
+            try:
+                winreg.QueryValueEx(key, "ResolutScrollMonitor")
+                return True
+            except FileNotFoundError:
+                return False
+            finally:
+                winreg.CloseKey(key)
+        except Exception:
+            return False
+
+    def _toggle_startup(self, enabled: bool):
+        """Enable or disable Windows auto-startup."""
+        if sys.platform != 'win32':
+            return
+            
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_WRITE)
+            if enabled:
+                # Use sys.executable if running as script, or just the path if bundled
+                # When bundled, sys.executable is the .exe path
+                app_path = f'"{os.path.abspath(sys.argv[0])}"'
+                winreg.SetValueEx(key, "ResolutScrollMonitor", 0, winreg.REG_SZ, app_path)
+                print(f"[Main] Startup enabled: {app_path}")
+            else:
+                try:
+                    winreg.DeleteValue(key, "ResolutScrollMonitor")
+                    print("[Main] Startup disabled")
+                except FileNotFoundError:
+                    pass
+            winreg.CloseKey(key)
+        except Exception as e:
+            print(f"[Main] Error toggling startup: {e}")
+            # Revert UI state if failed
+            self.startup_action.setChecked(not enabled)
         
     def _toggle_pause(self):
         self.is_paused = not self.is_paused

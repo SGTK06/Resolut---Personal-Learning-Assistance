@@ -9,7 +9,7 @@ A small, always-on-top floating circle with "R" logo that:
 
 import sys
 from PyQt6.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout
-from PyQt6.QtCore import Qt, QTimer, QPoint
+from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal
 from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QFont
 
 
@@ -21,7 +21,7 @@ class FloatingIndicator(QWidget):
     - Red: Social media detected, shows time
     """
     
-    SIZE = 60  # Diameter of the circle
+    clicked = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -29,6 +29,7 @@ class FloatingIndicator(QWidget):
         self.is_on_social = False
         self.social_minutes = 0.0
         self.drag_pos = QPoint()
+        self.press_pos = QPoint()
         
         self._init_ui()
         
@@ -46,6 +47,9 @@ class FloatingIndicator(QWidget):
         
         # Set size
         self.setFixedSize(self.SIZE, self.SIZE)
+        
+        # Cursor
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # Position in top-right corner
         screen = QApplication.primaryScreen().geometry()
@@ -113,13 +117,24 @@ class FloatingIndicator(QWidget):
     def mousePressEvent(self, event):
         """Handle mouse press for dragging."""
         if event.button() == Qt.MouseButton.LeftButton:
-            self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self.press_pos = event.globalPosition().toPoint()
+            self.drag_pos = self.press_pos - self.frameGeometry().topLeft()
             event.accept()
             
     def mouseMoveEvent(self, event):
         """Handle mouse move for dragging."""
         if event.buttons() == Qt.MouseButton.LeftButton:
             self.move(event.globalPosition().toPoint() - self.drag_pos)
+            event.accept()
+            
+    def mouseReleaseEvent(self, event):
+        """Handle mouse release for clicking."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            # Check if it was a click (minimal movement)
+            release_pos = event.globalPosition().toPoint()
+            distance = (release_pos - self.press_pos).manhattanLength()
+            if distance < 5:
+                self.clicked.emit()
             event.accept()
             
     def closeEvent(self, event):
