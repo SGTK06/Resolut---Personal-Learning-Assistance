@@ -2,6 +2,8 @@
 
 Resolut is a privacy-first, RAG-powered learning assistant designed to transform your local documents into structured, personalized learning paths.
 
+[![Watch the App Demo](https://img.youtube.com/vi/ejv1IggcJv8/maxresdefault.jpg)](https://youtu.be/ejv1IggcJv8)
+
 ## 🚀 Key Features
 
 ### 1. **Content-Aware Roadmap Generation**
